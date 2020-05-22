@@ -10,7 +10,10 @@ class GomokuGame {
     }
 
     fun resetBoard() {
-        TODO("not implemented") //To change body of created functions use File | Settings | File Templates.
+        board = Array(size*size) {
+            0
+        }
+        onBoardUpdate()
     }
 
     fun yourMove(index: Int, rollingResult: Int) {

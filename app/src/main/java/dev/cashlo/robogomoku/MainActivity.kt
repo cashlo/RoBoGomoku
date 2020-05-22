@@ -10,6 +10,7 @@ import androidx.camera.core.*
 import jp.co.sharp.android.rb.projectormanager.ProjectorManagerServiceUtil
 import kotlinx.android.synthetic.main.activity_main.*
 import java.io.*
+import java.util.*
 
 
 class MainActivity : AppCompatActivity() {
@@ -95,12 +96,14 @@ class MainActivity : AppCompatActivity() {
             setTargetResolution(Size(1280, 720))
         }.build()
 
+
+        val ran = Random()
         // Build the image analysis use case and instantiate our analyzer
         val analyzerUseCase = ImageAnalysis(analyzerConfig).apply {
             imageAnalyzer.onBitmapUpdate = {
                 index, bitmap ->
                 //if (saveImageButton.isChecked) {
-                if (true) {
+                if (false) {
                     val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
                     var imageFile: File? = null
                     try {

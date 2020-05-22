@@ -18,6 +18,7 @@ import android.content.res.AssetManager
 import android.graphics.Bitmap
 import android.util.Log
 import org.tensorflow.lite.Interpreter
+import org.tensorflow.lite.gpu.GpuDelegate
 import org.tensorflow.lite.support.common.ops.NormalizeOp
 import org.tensorflow.lite.support.image.ImageProcessor
 import org.tensorflow.lite.support.image.TensorImage
@@ -43,7 +44,7 @@ class PieceClassifier(private val context: Context) {
     arrayListOf(FloatArray(2))
   }
 
-  private val HISTORY_SIZE = 5
+  private val HISTORY_SIZE = 2
   private val THRESHOLD = 0.9f
 
   fun initialize() {
@@ -56,7 +57,9 @@ class PieceClassifier(private val context: Context) {
     val assetManager = context.assets
     val model = loadModelFile(assetManager, "model.tflite")
     val options = Interpreter.Options()
+    //options.addDelegate(GpuDelegate())
     options.setUseNNAPI(true)
+    options.setNumThreads(4)
     val interpreter = Interpreter(model, options)
 
     // Read input shape from model file

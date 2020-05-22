@@ -2,6 +2,7 @@ package dev.cashlo.robogomoku
 
 import android.graphics.Bitmap
 import android.graphics.Rect
+import android.os.SystemClock
 import android.util.Log
 import androidx.camera.core.ImageAnalysis
 import androidx.camera.core.ImageProxy
@@ -104,13 +105,15 @@ class BoardImageExtractor : ImageAnalysis.Analyzer  {
     override fun analyze(image: ImageProxy, rotationDegrees: Int) {
 
         val currentTimestamp = System.currentTimeMillis()
-        if (currentTimestamp - lastAnalyzedTimestamp < 100) {
+        if (currentTimestamp - lastAnalyzedTimestamp < 50) {
             return
         }
         lastAnalyzedTimestamp = currentTimestamp
 
+        val startTimeForLoadImage = System.currentTimeMillis()
         val rgbBitmap = imageProxyToBitmap(image)
 
+        Log.d("TimeLog", "Timecost of imageProxyToBitmap: " +  (System.currentTimeMillis() - startTimeForLoadImage))
         if (measureMode) {
             val topLeftPixels = IntArray(rgbBitmap.width*rgbBitmap.height/4)
             val topRightPixels = IntArray(rgbBitmap.width*rgbBitmap.height/4)
@@ -139,9 +142,12 @@ class BoardImageExtractor : ImageAnalysis.Analyzer  {
         }
 
 
+        val startTimeForAllUpdate = System.currentTimeMillis()
 
         for ((index,cropBitmap) in cropCells(rgbBitmap).withIndex()) {
-            if (index < 20) onBitmapUpdate(gameSize*gameSize - 1 - index, cropBitmap)
+            onBitmapUpdate(gameSize*gameSize - 1 - index, cropBitmap)
         }
+
+        Log.d("TimeLog", "Timecost of All onBitmapUpdate: " +  (System.currentTimeMillis() - startTimeForAllUpdate))
     }
 }

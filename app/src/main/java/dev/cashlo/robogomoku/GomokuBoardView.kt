@@ -2,7 +2,7 @@ package dev.cashlo.robogomoku
 
 import android.content.Context
 import android.graphics.Canvas
-import android.graphics.Color.GRAY
+import android.graphics.Color.*
 import android.graphics.Paint
 import android.util.AttributeSet
 import android.view.View
@@ -12,8 +12,6 @@ import java.lang.Math.*
  * TODO: document your custom view class.
  */
 class GomokuBoardView : View {
-    private var mPaint = Paint()
-
     val game = GomokuGame()
 
 
@@ -30,14 +28,6 @@ class GomokuBoardView : View {
     }
 
     private fun init(attrs: AttributeSet?, defStyle: Int) {
-        // Set up a default TextPaint object
-        with(mPaint){
-            flags = Paint.ANTI_ALIAS_FLAG
-            color = GRAY
-            style = Paint.Style.FILL_AND_STROKE
-            strokeWidth = 7f
-            textSize = 80f
-        }
         game.onBoardUpdate = {
             invalidate()
         }
@@ -49,7 +39,23 @@ class GomokuBoardView : View {
         with(boardPaint){
             flags = Paint.ANTI_ALIAS_FLAG
             color = GRAY
-            style = Paint.Style.STROKE
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = lineWidth
+        }
+
+        val whitePiecePaint = Paint()
+        with(whitePiecePaint){
+            flags = Paint.ANTI_ALIAS_FLAG
+            color = WHITE
+            style = Paint.Style.FILL_AND_STROKE
+            strokeWidth = lineWidth
+        }
+
+        val blackPiecePaint = Paint()
+        with(blackPiecePaint){
+            flags = Paint.ANTI_ALIAS_FLAG
+            color = BLACK
+            style = Paint.Style.FILL
             strokeWidth = lineWidth
         }
 
@@ -75,11 +81,32 @@ class GomokuBoardView : View {
                     topOffset+height,
                     boardPaint)
             }
-
             for (r in 0 until size) {
                 for (c in 0 until size) {
-                    if (game.board[r*size+c] == 1)
-                    drawCircle(leftOffset+rowHeight*c+lineWidth/2, topOffset+rowHeight*r+lineWidth/2, rowHeight/2*0.8f, boardPaint)
+                    if (game.board[r * size + c] == 1)
+                        if (drawAllPieces) {
+                            drawCircle(
+                                leftOffset + rowHeight * c + lineWidth / 2,
+                                topOffset + rowHeight * r + lineWidth / 2,
+                                rowHeight / 2 * 0.8f,
+                                whitePiecePaint
+                            )
+                            drawCircle(
+                                leftOffset + rowHeight * c + lineWidth / 2,
+                                topOffset + rowHeight * r + lineWidth / 2,
+                                rowHeight / 2 * 0.8f,
+                                blackPiecePaint
+                            )
+                        } else {
+                            drawCircle(
+                                leftOffset + rowHeight * c + lineWidth / 2,
+                                topOffset + rowHeight * r + lineWidth / 2,
+                                rowHeight / 2 * 0.8f,
+                                blackPiecePaint
+                            )
+                        }
+
+
                 }
             }
         }
