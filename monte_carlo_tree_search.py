@@ -22,7 +22,7 @@ class Node:
 			simulation_count += 1
 			#past_nodes.append(next_node)
 			#self.print('')
-			#code.interact(local=locals())
+		# code.interact(local=locals())
 		return self.best_UCB_child(0)
 
 	def expand_random_move(self):
@@ -56,11 +56,11 @@ class Node:
 		self.visit_count += 1
 		self.reward += reward
 		if self.parent is not None:
-			self.parent.backup(-reward)
+			self.parent.backup(-reward*0.99)
 
 	def print(self, prefix):
 		print(prefix + f"visit_count: {self.visit_count} reward: {self.reward} score: {self.reward/self.visit_count}")
-		for move in self.expanded_children:
+		for move in sorted(self.expanded_children):
 			self.expanded_children[move].print(prefix + f"    {move} ")
 
 	def create_from_move(self, move):

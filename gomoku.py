@@ -6,7 +6,7 @@ import code
 
 
 class GomokuSearchTree(Node):
-	def __init__(self, parent, board, from_move, next_player, simulation_limit=200, exploration_constant=1):
+	def __init__(self, parent, board, from_move, next_player, simulation_limit=200, exploration_constant=0.5):
 		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
 		self.board = board
 		self.from_move = from_move
@@ -16,7 +16,7 @@ class GomokuSearchTree(Node):
 	def create_from_move(self, move):
 		new_board = self.board.clone_board()
 		new_board.place_move(move, self.next_player)
-		return GomokuSearchTree( self, new_board, move, Gomoku.other(self.next_player))
+		return GomokuSearchTree( self, new_board, move, Gomoku.other(self.next_player), exploration_constant=self.exploration_constant)
 
 	def rollout(self):
 		simulation_board = self.board.clone_board()
@@ -141,8 +141,17 @@ class GomokuBoard:
 
 
 	def print(self):
+
+		header = '  '
+		for x in range(self.size):
+			if x == self.last_move%self.size:
+				header += '▼ '
+			else:
+				header += f'{x+1} '
+		print(header)
+
 		for y in range(self.size):
-			row = ''
+			row = f'{y+1} ' if self.last_move//self.size != y else '► '
 			for x in range(self.size):
 				cell = self.board[self.size*y+x]
 				if cell == Gomoku.BLACK:
@@ -185,9 +194,11 @@ class Gomoku:
 	IN_PROGRESS = 0
 	DRAW = 3
 	
-	def __init__(self, size=9):
+	def __init__(self, size=9, exploration_constant=0.5):
 		self.board = GomokuBoard(size)
-		self.search_tree = GomokuSearchTree(None, self.board, None, Gomoku.BLACK)
+		self.exploration_constant=exploration_constant
+		self.search_tree = GomokuSearchTree(None, self.board, None, Gomoku.BLACK, exploration_constant=self.exploration_constant)
+		
 
 
 	def other(player):
@@ -197,56 +208,73 @@ class Gomoku:
 		if self.board.last_move in self.search_tree.expanded_children:
 			self.search_tree = self.search_tree.expanded_children[self.board.last_move]
 		else:
-			self.search_tree = GomokuSearchTree(None, self.board, None, player)
+			self.search_tree = GomokuSearchTree(None, self.board, None, player, exploration_constant=self.exploration_constant)
 		move = self.search_tree.search().from_move
 		#self.search_tree.print('')
 		self.search_tree = self.search_tree.expanded_children[move]
 		return move
 
-	def one_game(i, size=9):
-		game = Gomoku(size)
+	def one_game(i, size=9, exploration_constant=0.5):
+		game = Gomoku(size, exploration_constant=exploration_constant)
 		player = Gomoku.BLACK
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
 			move = game.board.basic_move(player)
 			if player == Gomoku.WHITE:				
 				move = game.monte_carlo_move(Gomoku.WHITE)
 				# code.interact(local=locals())
-				print(f"white move {move}")
 			game.board.place_move(move, player)
 			player = Gomoku.other(player)
 			game.board.print()
-		#print(f"Game {i}: {game.check_board()}")
-		
+		print(f"Game {i}: {game.board.check_board()}")
 		return game.board.check_board()
 
-def multi_thread():
+	def human_play(size=9):
+		game = Gomoku(size)
+		player = Gomoku.BLACK
+		while game.board.check_board() == Gomoku.IN_PROGRESS:
+			move = game.monte_carlo_move(player)
+			if player == Gomoku.WHITE:
+				game.board.print()
+				x = int(input('x? '))-1
+				y = int(input('y? '))-1
+				move = y*game.board.size+x
+				# code.interact(local=locals())
+			game.board.place_move(move, player)
+			player = Gomoku.other(player)
+		game.board.print()
+		print(f"Game: {game.board.check_board()}")
+
+def multi_thread(number_of_games, game_size):
 	game_count = defaultdict(int)
 
 	with concurrent.futures.ThreadPoolExecutor() as executor:
-		future_game_list = [executor.submit(Gomoku.one_game, i) for i in range(100)]
+		future_game_list = [executor.submit(Gomoku.one_game, i, game_size) for i in range(number_of_games)]
 		for game in future_game_list:
 			game_count[game.result()] += 1
 	print(game_count)
 
-def single_thread():
-	game_count = defaultdict(int)
-	game_result = [Gomoku.one_game(i) for i in range(10)]
-	for result in game_result:
-		game_count[result] += 1
-	print(game_count)
+def single_thread(number_of_games, game_size):
+	for ec in [0.1, 1]:
+		game_count = defaultdict(int)
+		game_result = [Gomoku.one_game(i, size=game_size, exploration_constant=ec) for i in range(number_of_games)]
+		for result in game_result:
+			game_count[result] += 1
+		print(f"White win rate: {game_count[2]/number_of_games:.0%} exploration_constant:{ec}")
 
 if __name__=="__main__":
 	# import timeit
-	# print(timeit.timeit("single_thread()", setup="from __main__ import single_thread", number=3))
-	# print(timeit.timeit("multi_thread()", setup="from __main__ import multi_thread", number=3))
+	# print(timeit.timeit("single_thread(10, 5)", setup="from __main__ import single_thread", number=3))
+	# print(timeit.timeit("multi_thread(10, 5)", setup="from __main__ import multi_thread", number=3))
 	
 	
-	single_thread()
+	single_thread(30, 7)
 
-	game = Gomoku()
-	for i in [0,1,3,4]:
-		game.board.place_move(i, Gomoku.BLACK)
-	print(game.monte_carlo_move(Gomoku.WHITE))
+	# Gomoku.human_play(6)
+	#game = Gomoku(9)
+	#for i in [0,1,3,4]:
+	# 	game.board.place_move(i, Gomoku.BLACK)
+	#game.board.print()
+	# print(game.monte_carlo_move(Gomoku.WHITE))
 	
 	# code.interact(local=locals())
 

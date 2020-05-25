@@ -70,8 +70,6 @@ class TestGomoku(unittest.TestCase):
 		game = Gomoku()
 		for move in [7+8*4,7+8*3,7+8*2,7+8,7]:
 			game.board.place_move(move, Gomoku.BLACK)
-		game.board.print()
-		code.interact(local=locals())
 		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 		
 
