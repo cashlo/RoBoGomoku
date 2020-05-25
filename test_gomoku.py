@@ -15,8 +15,21 @@ class TestGomoku(unittest.TestCase):
 		game.board.place_move(3, Gomoku.BLACK)
 		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
 
+
+	def test_draw(self):
+		game = Gomoku()
+		for move in range(game.board.size*game.board.size):
+			game.board.place_move(move, 3)
+		self.assertEqual(game.board.check_board(), Gomoku.DRAW)
+
 	def test_black_win(self):
 		game = Gomoku()
+		for move in range(5):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
+
+		game = Gomoku()
+		game.board.place_move(8, Gomoku.WHITE)
 		for move in range(5):
 			game.board.place_move(move, Gomoku.BLACK)
 		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
@@ -52,4 +65,22 @@ class TestGomoku(unittest.TestCase):
 			game.board.place_move(move, Gomoku.BLACK)
 		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 		
+
+	def test_basic_move(self):
+		game = Gomoku()
+		for i in range(4):
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.board.basic_move(Gomoku.BLACK), 4)
+
+		game = Gomoku()
+		for i in range(4):
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.board.basic_move(Gomoku.WHITE), 4)
+
+		game = Gomoku()
+		for i in range(4):
+			game.board.place_move(i, Gomoku.BLACK)
+
+		game.board.place_move(8, Gomoku.WHITE)
+		self.assertEqual(game.board.basic_move(Gomoku.BLACK), 4)
 

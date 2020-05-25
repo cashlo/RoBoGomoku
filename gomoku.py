@@ -26,7 +26,13 @@ class GomokuSearchTree(Node):
 			simulation_board.place_move(move, player)
 			player = Gomoku.other(player)
 		result = simulation_board.check_board()
-		if result == self.next_player:
+		#print(f"self.next_player: {self.next_player}")
+		#print(f"sim result: {result}")
+		#simulation_board.print_board()
+
+
+		last_player = Gomoku.other(self.next_player)
+		if result == last_player:
 			return 1
 		if result == Gomoku.DRAW:
 			return 0
@@ -105,21 +111,31 @@ class GomokuBoard:
 		self.last_move = move
 		self.total_moves += 1
 
+	def rollback_move(self, move, last_move):
+		self.board[move] = Gomoku.EMPTY
+		self.last_move = last_move
+		self.total_moves -= 1
+
+
 	def basic_move(self, player):
 		empty_position_list = [i for i, p in enumerate(self.board) if p == Gomoku.EMPTY]
+		last_move = self.last_move
 		for move in empty_position_list:
-			self.board[move] = player
+			self.place_move(move,player)
 			if self.check_board() == player:
-				self.board[move] = 0
+				self.rollback_move(move, last_move)
 				return move
-			self.board[move] = 0
+			self.rollback_move(move, last_move)
 
 		for move in empty_position_list:
-			self.board[move] = Gomoku.other(player)
+			self.place_move(move,Gomoku.other(player))
 			if self.check_board() == Gomoku.other(player):
-				self.board[move] = 0
+				self.rollback_move(move, last_move)
 				return move
-			self.board[move] = 0
+			self.rollback_move(move, last_move)
+
+		if not empty_position_list:
+			code.interact(local=locals())
 
 		return random.choice(empty_position_list)
 
@@ -222,4 +238,14 @@ if __name__=="__main__":
 	# import timeit
 	# print(timeit.timeit("single_thread()", setup="from __main__ import single_thread", number=3))
 	# print(timeit.timeit("multi_thread()", setup="from __main__ import multi_thread", number=3))
-	Gomoku.one_game(1, 9)
+	
+	
+
+	game = Gomoku()
+	for move in range(4):
+		game.board.place_move(move, Gomoku.BLACK)
+	game.search_tree = GomokuSearchTree(None, game.board, None, Gomoku.WHITE)
+	move = game.search_tree.search().from_move
+	print(move)
+	print([(n.from_move, n.reward, n.visit_count) for n in game.search_tree.expanded_children.values()])
+	code.interact(local=locals())
