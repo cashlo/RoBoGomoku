@@ -6,7 +6,7 @@ import code
 
 
 class GomokuSearchTree(Node):
-	def __init__(self, parent, board, from_move, next_player, simulation_limit=200, exploration_constant=0.5):
+	def __init__(self, parent, board, from_move, next_player, simulation_limit=400, exploration_constant=1):
 		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
 		self.board = board
 		self.from_move = from_move
@@ -140,7 +140,7 @@ class GomokuBoard:
 		return random.choice(empty_position_list)
 
 
-	def print_board(self):
+	def print(self):
 		for y in range(self.size):
 			row = ''
 			for x in range(self.size):
@@ -199,6 +199,7 @@ class Gomoku:
 		else:
 			self.search_tree = GomokuSearchTree(None, self.board, None, player)
 		move = self.search_tree.search().from_move
+		game.search_tree.print('')
 		self.search_tree = self.search_tree.expanded_children[move]
 		return move
 
@@ -241,4 +242,13 @@ if __name__=="__main__":
 	# print(timeit.timeit("multi_thread()", setup="from __main__ import multi_thread", number=3))
 	
 	
-	single_thread()
+	#single_thread()
+
+	game = Gomoku()
+	for i in [0,1,3,4]:
+		game.board.place_move(i, Gomoku.BLACK)
+	print(game.monte_carlo_move(Gomoku.WHITE))
+	
+	# code.interact(local=locals())
+
+	#print([(n.from_move, n.reward, n.visit_count) for n in game.search_tree.expanded_children.values()])
