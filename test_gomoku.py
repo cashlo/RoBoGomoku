@@ -84,3 +84,37 @@ class TestGomoku(unittest.TestCase):
 		game.board.place_move(8, Gomoku.WHITE)
 		self.assertEqual(game.board.basic_move(Gomoku.BLACK), 4)
 
+		game = Gomoku()
+		for i in [0,1,3,4]:
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.board.basic_move(Gomoku.WHITE), 2)
+
+		game = Gomoku()
+		for i in [0,1,3,4]:
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.board.basic_move(Gomoku.BLACK), 2)
+
+
+	def test_MCTS(self):
+		game = Gomoku()
+		for i in range(4):
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.monte_carlo_move(Gomoku.WHITE), 4)
+
+		game = Gomoku()
+		for i in range(4):
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.monte_carlo_move(Gomoku.BLACK), 4)
+
+		game = Gomoku()
+		for i in [0,1,3,4]:
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.monte_carlo_move(Gomoku.WHITE), 2)
+
+		game = Gomoku()
+		for i in [0,1,3,4]:
+			game.board.place_move(i, Gomoku.BLACK)
+		self.assertEqual(game.monte_carlo_move(Gomoku.BLACK), 2)
+
+		
+

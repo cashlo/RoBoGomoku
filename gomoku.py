@@ -6,7 +6,7 @@ import code
 
 
 class GomokuSearchTree(Node):
-	def __init__(self, parent, board, from_move, next_player, simulation_limit=100, exploration_constant=1):
+	def __init__(self, parent, board, from_move, next_player, simulation_limit=200, exploration_constant=0.5):
 		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
 		self.board = board
 		self.from_move = from_move
@@ -194,20 +194,21 @@ class Gomoku:
 		return 3 - player
 
 	def monte_carlo_move(self, player):
-		pass
+		if self.board.last_move in self.search_tree.expanded_children:
+			self.search_tree = self.search_tree.expanded_children[game.board.last_move]
+		else:
+			self.search_tree = GomokuSearchTree(None, self.board, None, player)
+		move = self.search_tree.search().from_move
+		self.search_tree = self.search_tree.expanded_children[move]
+		return move
 
 	def one_game(i, size=9):
 		game = Gomoku(size)
 		player = Gomoku.BLACK
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
 			move = game.board.basic_move(player)
-			if player == Gomoku.WHITE:
-				if game.board.last_move in game.search_tree.expanded_children:
-					game.search_tree = game.search_tree.expanded_children[game.board.last_move]
-				else:
-					game.search_tree = GomokuSearchTree(None, game.board, None, Gomoku.WHITE)
-				
-				move = game.search_tree.search().from_move
+			if player == Gomoku.WHITE:				
+				move = game.monte_carlo_move(Gomoku.WHITE)
 				# code.interact(local=locals())
 				game.search_tree = game.search_tree.expanded_children[move]
 				print(f"white move {move}")
@@ -229,7 +230,7 @@ def multi_thread():
 
 def single_thread():
 	game_count = defaultdict(int)
-	game_result = [Gomoku.one_game(i) for i in range(100)]
+	game_result = [Gomoku.one_game(i) for i in range(10)]
 	for result in game_result:
 		game_count[result] += 1
 	print(game_count)
@@ -240,12 +241,4 @@ if __name__=="__main__":
 	# print(timeit.timeit("multi_thread()", setup="from __main__ import multi_thread", number=3))
 	
 	
-
-	game = Gomoku()
-	for move in range(4):
-		game.board.place_move(move, Gomoku.BLACK)
-	game.search_tree = GomokuSearchTree(None, game.board, None, Gomoku.WHITE)
-	move = game.search_tree.search().from_move
-	print(move)
-	print([(n.from_move, n.reward, n.visit_count) for n in game.search_tree.expanded_children.values()])
-	code.interact(local=locals())
+	single_thread()
