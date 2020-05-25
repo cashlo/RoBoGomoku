@@ -5,46 +5,51 @@ class TestGomoku(unittest.TestCase):
 
 	def test_no_win(self):
 		game = Gomoku()
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
-		game.board[0] = Gomoku.BLACK
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
-		game.board[1] = Gomoku.BLACK
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
-		game.board[2] = Gomoku.BLACK
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
-		game.board[3] = Gomoku.BLACK
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
+		game.board.place_move(0, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
+		game.board.place_move(1, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
+		game.board.place_move(2, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
+		game.board.place_move(3, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
 
 	def test_black_win(self):
 		game = Gomoku()
-		game.board[0:5] = [Gomoku.BLACK]*5
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(5):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 
 		game = Gomoku()
-		game.board[4:9] = [Gomoku.BLACK]*5
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(4,9):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 
 		game = Gomoku()
-		game.board[6:11] = [Gomoku.BLACK]*5
-		self.assertEqual(game.check_board(), Gomoku.IN_PROGRESS)
+		for move in range(game.board.size-3,game.board.size+3):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
 
 		game = Gomoku()
-		game.board[game.board_size*game.board_size-5:game.board_size*game.board_size] = [Gomoku.BLACK]*5
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(game.board.size*game.board.size-5,game.board.size*game.board.size):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 
 		game = Gomoku()
-		game.board[6:6+game.board_size*5:game.board_size] = [Gomoku.BLACK]*5
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(6,6+game.board.size*5,game.board.size):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 
 		game = Gomoku()
-		game.board[6:6+(game.board_size-1)*5:game.board_size-1] = [Gomoku.BLACK]*5
-		game.print_board()
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(6,6+(game.board.size-1)*5,game.board.size-1):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 
 
 		game = Gomoku()
-		game.board[game.board_size*(game.board_size+1)-(game.board_size+1)*5:game.board_size*game.board_size:game.board_size+1] = [Gomoku.BLACK]*5
-		game.print_board()
-		self.assertEqual(game.check_board(), Gomoku.BLACK)
+		for move in range(game.board.size*(game.board.size+1)-(game.board.size+1)*5,game.board.size*game.board.size,game.board.size+1):
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 		
 
