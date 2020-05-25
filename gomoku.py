@@ -6,7 +6,7 @@ import code
 
 
 class GomokuSearchTree(Node):
-	def __init__(self, parent, board, from_move, next_player, simulation_limit=400, exploration_constant=1):
+	def __init__(self, parent, board, from_move, next_player, simulation_limit=200, exploration_constant=1):
 		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
 		self.board = board
 		self.from_move = from_move
@@ -85,8 +85,8 @@ class GomokuBoard:
 		move_line_list = [
 			(self.size*y+min_x, self.size*y+max_x, 1),
 			(self.size*min_y+x, self.size*max_y+x, self.size),
-			(main_diagonal_start, main_diagonal_end, self.size+1),
-			(anti_diagonal_start, anti_diagonal_end, self.size-1),
+			(main_diagonal_start, main_diagonal_end+1, self.size+1),
+			(anti_diagonal_start, anti_diagonal_end+1, self.size-1),
 		]
 
 		for line in move_line_list:
@@ -195,11 +195,11 @@ class Gomoku:
 
 	def monte_carlo_move(self, player):
 		if self.board.last_move in self.search_tree.expanded_children:
-			self.search_tree = self.search_tree.expanded_children[game.board.last_move]
+			self.search_tree = self.search_tree.expanded_children[self.board.last_move]
 		else:
 			self.search_tree = GomokuSearchTree(None, self.board, None, player)
 		move = self.search_tree.search().from_move
-		game.search_tree.print('')
+		#self.search_tree.print('')
 		self.search_tree = self.search_tree.expanded_children[move]
 		return move
 
@@ -211,11 +211,10 @@ class Gomoku:
 			if player == Gomoku.WHITE:				
 				move = game.monte_carlo_move(Gomoku.WHITE)
 				# code.interact(local=locals())
-				game.search_tree = game.search_tree.expanded_children[move]
 				print(f"white move {move}")
 			game.board.place_move(move, player)
 			player = Gomoku.other(player)
-			game.board.print_board()
+			game.board.print()
 		#print(f"Game {i}: {game.check_board()}")
 		
 		return game.board.check_board()
@@ -242,7 +241,7 @@ if __name__=="__main__":
 	# print(timeit.timeit("multi_thread()", setup="from __main__ import multi_thread", number=3))
 	
 	
-	#single_thread()
+	single_thread()
 
 	game = Gomoku()
 	for i in [0,1,3,4]:

@@ -1,5 +1,6 @@
 import unittest
 from gomoku import Gomoku
+import code
 
 class TestGomoku(unittest.TestCase):
 
@@ -63,6 +64,14 @@ class TestGomoku(unittest.TestCase):
 		game = Gomoku()
 		for move in range(game.board.size*(game.board.size+1)-(game.board.size+1)*5,game.board.size*game.board.size,game.board.size+1):
 			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
+
+
+		game = Gomoku()
+		for move in [7+8*4,7+8*3,7+8*2,7+8,7]:
+			game.board.place_move(move, Gomoku.BLACK)
+		game.board.print()
+		code.interact(local=locals())
 		self.assertEqual(game.board.check_board(), Gomoku.BLACK)
 		
 
