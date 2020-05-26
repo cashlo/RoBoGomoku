@@ -1,13 +1,20 @@
 package dev.cashlo.robogomoku
 
+
 import kotlin.math.max
 import kotlin.math.min
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.launch
+import java.util.concurrent.Executors
+
+val BACKGROUND = Executors.newFixedThreadPool(1)
 
 class GomokuGame {
 
     var onBoardUpdate = {}
     var board = GomokuBoard(IntArray(SIZE*SIZE){0}, -1, (0 until SIZE*SIZE).toHashSet())
-    var gomokuSearcher = MonteCarloSearch(10f, 1f)
+    var gomokuSearcher = MonteCarloSearch(2000, 1f)
     var gomokuSearchTree = GomokuSearchNode(null, board.clone(), WHITE)
 
 
@@ -22,14 +29,17 @@ class GomokuGame {
         gomokuSearchTree = gomokuSearchTree.createFromMove(lastMove)
         val move = (gomokuSearcher.search(gomokuSearchTree) as GomokuSearchNode).getMove()
         board.placeMove(move, WHITE)
+        gomokuSearchTree = gomokuSearchTree.createFromMove(move)
+        onBoardUpdate()
     }
 
     fun yourMove(index: Int) {
         if (!board.canPlace(index)) return
         board.placeMove(index, BLACK)
         onBoardUpdate()
-        myMove(index)
-        onBoardUpdate()
+        if (board.checkBoard() == IN_PROGRESS) {
+            myMove(index)
+        }
     }
 
     class GomokuBoard(var board: IntArray, var lastMove: Int, var movesLeft: HashSet<Int>) {

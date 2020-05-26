@@ -64,7 +64,11 @@ class GomokuBoardView : View {
 
             val rowHeight = (height-lineWidth)/(GomokuGame.SIZE)
 
-            val offset = 0.3f
+            when (game.board.checkBoard()) {
+                GomokuGame.BLACK -> drawText("You won!", 0f, 70f, boardPaint)
+                GomokuGame.WHITE   -> drawText("I won!", 0f, 70f, boardPaint)
+                GomokuGame.DRAW    -> drawText("Draw...", 0f, 70f, boardPaint)
+            }
 
             for (r in 0 until GomokuGame.SIZE) {
                 drawLine(
@@ -128,7 +132,7 @@ class GomokuBoardView : View {
 
         val leftOffset = (1280-720)/2f
         drawBoard(canvas, leftOffset, 0f, 720f, 5f,false)
-        drawBoard(canvas, 20f, 240f, 240f, 1f,true)
+        //drawBoard(canvas, 20f, 240f, 240f, 1f,true)
 
     }
 

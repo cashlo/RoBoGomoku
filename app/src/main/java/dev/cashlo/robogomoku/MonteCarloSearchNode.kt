@@ -2,17 +2,17 @@ package dev.cashlo.robogomoku
 
 import android.util.Log
 
-class MonteCarloSearch(private val simulationTime: Float, private val temperature: Float) {
+class MonteCarloSearch(private val simulationTime: Long, private val temperature: Float) {
     fun search(root: MonteCarloSearchNode): MonteCarloSearchNode {
-        var simulationCount = 1
+        var simulationCount = 0
         val startTime = System.currentTimeMillis()
-        while ((simulationCount%100 > 0) || (System.currentTimeMillis() < startTime + simulationTime*1000)) {
+        while ((simulationCount%100 > 0) || (System.currentTimeMillis() < startTime + simulationTime)) {
             val nextNode = root.pickNextNode(temperature)
             val reward = nextNode.rollOut()
             nextNode.backup(reward)
             simulationCount += 1
         }
-        Log.d("MSTS", "Number of simulations: $simulationCount")
+        Log.d("MCTS", "Number of simulations: $simulationCount")
         return root.bestUCBChild(0f)
     }
 }
