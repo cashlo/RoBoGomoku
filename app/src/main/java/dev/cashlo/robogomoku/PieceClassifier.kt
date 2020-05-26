@@ -38,9 +38,7 @@ class PieceClassifier(private val context: Context) {
   private var inputImageHeight: Int = 0 // will be inferred from TF Lite model.
   private var modelInputSize: Int = 0 // will be inferred from TF Lite model.
 
-  private val gameSize = 15
-
-  private val boardResultHistory = Array(gameSize*gameSize) {
+  private val boardResultHistory = Array(GomokuGame.SIZE*GomokuGame.SIZE) {
     arrayListOf(FloatArray(2))
   }
 

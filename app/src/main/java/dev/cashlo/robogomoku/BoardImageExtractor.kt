@@ -13,7 +13,6 @@ class BoardImageExtractor : ImageAnalysis.Analyzer  {
     var measureMode = false
 
     private var lastAnalyzedTimestamp = 0L
-    val gameSize = 15
 
     var onBitmapUpdate = {i: Int, bm: Bitmap -> }
     var onMeasurement = {}
@@ -53,15 +52,15 @@ class BoardImageExtractor : ImageAnalysis.Analyzer  {
         val cropRectList = ArrayList<Rect>()
         val leftOffset = (1280-720)/2f + 5/2f
         val topOffset = 5/2f
-        val cellHeight = (720-5)/(gameSize-1)
+        val cellHeight = (720-5)/(GomokuGame.SIZE)
 
-        for (r in 0 until gameSize) {
-            for (c in 0 until gameSize) {
+        for (r in 0 until GomokuGame.SIZE) {
+            for (c in 0 until GomokuGame.SIZE) {
                 cropRectList.add(Rect(
-                    (leftOffset+cellHeight*(c-0.5)).toInt(),
-                    (topOffset+cellHeight*(r-0.5)).toInt(),
-                    (leftOffset+cellHeight*(c+0.5)).toInt(),
-                    (topOffset+cellHeight*(r+0.5)).toInt()))
+                    (leftOffset+cellHeight*c).toInt(),
+                    (topOffset+cellHeight*r).toInt(),
+                    (leftOffset+cellHeight*(c+1)).toInt(),
+                    (topOffset+cellHeight*(r+1)).toInt()))
             }
         }
 
@@ -145,7 +144,7 @@ class BoardImageExtractor : ImageAnalysis.Analyzer  {
         val startTimeForAllUpdate = System.currentTimeMillis()
 
         for ((index,cropBitmap) in cropCells(rgbBitmap).withIndex()) {
-            onBitmapUpdate(gameSize*gameSize - 1 - index, cropBitmap)
+            onBitmapUpdate(GomokuGame.SIZE*GomokuGame.SIZE - 1 - index, cropBitmap)
         }
 
         Log.d("TimeLog", "Timecost of All onBitmapUpdate: " +  (System.currentTimeMillis() - startTimeForAllUpdate))

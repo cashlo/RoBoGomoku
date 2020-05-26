@@ -41,6 +41,7 @@ class GomokuBoardView : View {
             color = GRAY
             style = Paint.Style.FILL_AND_STROKE
             strokeWidth = lineWidth
+            textSize = 80f
         }
 
         val whitePiecePaint = Paint()
@@ -61,50 +62,60 @@ class GomokuBoardView : View {
 
         with(canvas) {
 
-            val size = game.size
-            val rowHeight = (height-lineWidth)/(size-1)
+            val rowHeight = (height-lineWidth)/(GomokuGame.SIZE)
 
             val offset = 0.3f
 
-            for (r in 0 until size) {
+            for (r in 0 until GomokuGame.SIZE) {
                 drawLine(
-                    leftOffset,
-                    topOffset+rowHeight*r+lineWidth/2,
-                    leftOffset+height,
-                    topOffset+rowHeight*r+lineWidth/2,
+                    leftOffset+rowHeight/2,
+                    topOffset+rowHeight*(r+0.5f)+lineWidth/2,
+                    leftOffset+height-rowHeight/2,
+                    topOffset+rowHeight*(r+0.5f)+lineWidth/2,
                     boardPaint)
 
                 drawLine(
-                    leftOffset+rowHeight*r+lineWidth/2,
-                    topOffset,
-                    leftOffset+rowHeight*r+lineWidth/2,
-                    topOffset+height,
+                    leftOffset+rowHeight*(r+0.5f)+lineWidth/2,
+                    topOffset+rowHeight/2,
+                    leftOffset+rowHeight*(r+0.5f)+lineWidth/2,
+                    topOffset+height-rowHeight/2,
                     boardPaint)
             }
-            for (r in 0 until size) {
-                for (c in 0 until size) {
-                    if (game.board[r * size + c] == 1)
+            for (r in 0 until GomokuGame.SIZE) {
+                for (c in 0 until GomokuGame.SIZE) {
+                    if (game.board.board[r * GomokuGame.SIZE + c] == GomokuGame.BLACK) {
                         if (drawAllPieces) {
                             drawCircle(
-                                leftOffset + rowHeight * c + lineWidth / 2,
-                                topOffset + rowHeight * r + lineWidth / 2,
+                                leftOffset + rowHeight * (c + 0.5f) + lineWidth / 2,
+                                topOffset + rowHeight * (r + 0.5f) + lineWidth / 2,
                                 rowHeight / 2 * 0.8f,
                                 whitePiecePaint
                             )
                             drawCircle(
-                                leftOffset + rowHeight * c + lineWidth / 2,
-                                topOffset + rowHeight * r + lineWidth / 2,
+                                leftOffset + rowHeight * (c + 0.5f) + lineWidth / 2,
+                                topOffset + rowHeight * (r + 0.5f) + lineWidth / 2,
                                 rowHeight / 2 * 0.8f,
                                 blackPiecePaint
                             )
                         } else {
                             drawCircle(
-                                leftOffset + rowHeight * c + lineWidth / 2,
-                                topOffset + rowHeight * r + lineWidth / 2,
+                                leftOffset + rowHeight * (c + 0.5f) + lineWidth / 2,
+                                topOffset + rowHeight * (r + 0.5f) + lineWidth / 2,
                                 rowHeight / 2 * 0.8f,
                                 blackPiecePaint
                             )
                         }
+                    }
+
+                    if (game.board.board[r * GomokuGame.SIZE + c] == GomokuGame.WHITE) {
+                        drawCircle(
+                            leftOffset + rowHeight * (c + 0.5f) + lineWidth / 2,
+                            topOffset + rowHeight * (r + 0.5f) + lineWidth / 2,
+                            rowHeight / 2 * 0.8f,
+                            whitePiecePaint
+                        )
+                    }
+
 
 
                 }

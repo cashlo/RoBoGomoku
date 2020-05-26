@@ -135,7 +135,7 @@ class MainActivity : AppCompatActivity() {
                         this@MainActivity.runOnUiThread {
                             val rollingResult = digitClassifier.getRollingResult(index, result)
                             if (rollingResult != 1) return@runOnUiThread
-                            gameBoard.game.yourMove(index, rollingResult)
+                            gameBoard.game.yourMove(index)
                     }
                 }
             }
