@@ -16,6 +16,14 @@ class TestGomoku(unittest.TestCase):
 		game.board.place_move(3, Gomoku.BLACK)
 		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
 
+		game = Gomoku(7)
+		for move in [game.board.size*4+3, game.board.size*4+4, game.board.size*4+5, game.board.size*6]:
+			game.board.place_move(move, Gomoku.BLACK)
+		for move in [game.board.size+3, game.board.size*2+4, game.board.size*3+5, game.board.size*4+6]:
+			game.board.place_move(move, Gomoku.BLACK)
+		self.assertEqual(game.board.check_board(), Gomoku.IN_PROGRESS)
+
+
 
 	def test_draw(self):
 		game = Gomoku()

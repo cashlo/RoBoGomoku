@@ -1,9 +1,10 @@
 import math
 import code
 import random
+from time import time
 
 class Node:
-	def __init__(self, parent=None, simulation_limit=100, exploration_constant=1):
+	def __init__(self, parent=None, simulation_limit=1, exploration_constant=1, reward_decay=1):
 		self.parent=parent
 		self.reward = 0
 		self.visit_count = 0
@@ -11,18 +12,21 @@ class Node:
 		self.expanded_children = {}
 		self.simulation_limit = simulation_limit
 		self.exploration_constant = exploration_constant
+		self.reward_decay = reward_decay
 
 	def search(self):
 		simulation_count = 0
+		start_time = time()
 		#past_nodes = []
-		while simulation_count < self.simulation_limit:
+		while simulation_count%100 or time() < start_time+self.simulation_limit:
 			next_node = self.pick_next_node(self.exploration_constant)
 			reward = next_node.rollout()
 			next_node.backup(reward)
 			simulation_count += 1
 			#past_nodes.append(next_node)
-			#self.print('')
+		# self.print('')
 		# code.interact(local=locals())
+		print(f"Number of sumulation: {simulation_count}")
 		return self.best_UCB_child(0)
 
 	def expand_random_move(self):
@@ -56,12 +60,17 @@ class Node:
 		self.visit_count += 1
 		self.reward += reward
 		if self.parent is not None:
-			self.parent.backup(-reward*0.99)
+			self.parent.backup(-reward*self.reward_decay)
+
+	def sorted_UCB_child(self, exploration_constant):
+		def ucb(n):
+			return n.reward/n.visit_count + exploration_constant*math.sqrt(2*math.log(self.visit_count)/n.visit_count)
+		return sorted(self.expanded_children.values(), key=ucb, reverse=True)
 
 	def print(self, prefix):
 		print(prefix + f"visit_count: {self.visit_count} reward: {self.reward} score: {self.reward/self.visit_count}")
-		for move in sorted(self.expanded_children):
-			self.expanded_children[move].print(prefix + f"    {move} ")
+		for child in self.sorted_UCB_child(0):
+			child.print(prefix + f"    {child.from_move%7+1} {child.from_move//7+1} ")
 
 	def create_from_move(self, move):
 		pass
