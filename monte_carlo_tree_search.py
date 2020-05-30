@@ -18,7 +18,7 @@ class Node:
 		simulation_count = 0
 		start_time = time()
 		#past_nodes = []
-		while simulation_count%100 or time() < start_time+self.simulation_limit:
+		while time() < start_time+self.simulation_limit:
 			next_node = self.pick_next_node(self.exploration_constant)
 			reward = next_node.rollout()
 			next_node.backup(reward)
@@ -31,7 +31,6 @@ class Node:
 
 	def expand_random_move(self):
 		move = self.possible_move_list.pop()
-
 
 		new_child = self.create_from_move(move)
 		self.expanded_children[move] = new_child

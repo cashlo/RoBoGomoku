@@ -1,0 +1,74 @@
+from tensorflow.keras.models import Model
+from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Flatten, Input, Reshape, Conv2D, add
+from tensorflow.keras.optimizers import Adam
+
+import numpy as np
+
+class AlphaGoZeroModel:
+    def __init__(
+            self,
+            input_board_size=7,
+            number_of_filters=8,
+            kernal_size=3,
+            number_of_residual_block=1,
+            value_head_hidden_layer_size=8):
+        self.input_board_size = input_board_size
+        self.number_of_filters = number_of_filters
+        self.kernal_size = kernal_size
+        self.number_of_residual_block = number_of_residual_block
+        self.policy_output_size = input_board_size*input_board_size
+        self.value_head_hidden_layer_size = value_head_hidden_layer_size
+        
+    def convolution_block(self, input_tensor):
+        x = input_tensor
+        x = Conv2D(self.number_of_filters, self.kernal_size, padding='same')(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        return x
+    
+    def residual_block(self, input_tensor):
+        x = input_tensor
+        x = self.convolution_block(x)
+        x = Conv2D(self.number_of_filters, self.kernal_size, padding='same')(x)
+        x = BatchNormalization()(x)
+        x = add([x, input_tensor])
+        x = Activation('relu')(x)
+        return x
+    
+    def policy_head(self, input_tensor):
+        x = input_tensor
+        x = Conv2D(2, 1)(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Flatten()(x)
+        x = Dense(self.policy_output_size, activation='softmax', name='policy_head')(x)
+        return x
+        
+    def value_head(self, input_tensor):
+        x = input_tensor
+        x = Conv2D(1, 1)(x)
+        x = BatchNormalization()(x)
+        x = Activation('relu')(x)
+        x = Flatten()(x)
+        x = Dense(self.value_head_hidden_layer_size)(x)
+        x = Activation('relu')(x)
+        x = Dense(1)(x)
+        x = Activation('tanh')(x)
+        return x
+        
+    def init_model(self):
+        input_tensor = Input((self.input_board_size, self.input_board_size, 2))
+        x = input_tensor
+        x = self.convolution_block(x)
+        for _ in range(self.number_of_residual_block):
+            x = self.residual_block(x)
+        self.model = Model(inputs=input_tensor, outputs=[self.policy_head(x), self.value_head(x)])
+        self.model.compile(Adam(lr=2e-2), ['categorical_crossentropy', 'mean_squared_error'])
+        
+        return self
+    
+    def train_from_game_log(self, game_log):
+        self.model.fit(np.array(game_log['x']), [np.array(game_log['y'][0]), np.array(game_log['y'][1])], shuffle=True, batch_size=64)
+        
+        
+
