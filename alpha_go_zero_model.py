@@ -1,3 +1,4 @@
+import tensorflow as tf
 from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Flatten, Input, Reshape, Conv2D, add
 from tensorflow.keras.optimizers import Adam
@@ -63,12 +64,29 @@ class AlphaGoZeroModel:
         for _ in range(self.number_of_residual_block):
             x = self.residual_block(x)
         self.model = Model(inputs=input_tensor, outputs=[self.policy_head(x), self.value_head(x)])
-        self.model.compile(Adam(lr=2e-2), ['categorical_crossentropy', 'mean_squared_error'])
+        self.model.compile(Adam(lr=2e-3), ['categorical_crossentropy', 'mean_squared_error'])
         
         return self
     
     def train_from_game_log(self, game_log):
-        self.model.fit(np.array(game_log['x']), [np.array(game_log['y'][0]), np.array(game_log['y'][1])], shuffle=True, batch_size=64)
-        
+        x = np.array(game_log['x'])
+        y0 = np.array(game_log['y'][0])
+        y1 = np.array(game_log['y'][1])
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
+        x = tf.image.rot90(x, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0 = tf.image.rot90(y0, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
+        x = tf.image.rot90(x, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0 = tf.image.rot90(y0, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
+        x = tf.image.rot90(x, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0 = tf.image.rot90(y0, k=1)
+        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
+        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
         
 

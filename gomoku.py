@@ -160,14 +160,14 @@ class GomokuBoard:
 
 		header = '   '
 		for x in range(self.size):
-			if x == self.last_move%self.size:
+			if self.last_move is not None and x == self.last_move%self.size:
 				header += '▼ '
 			else:
 				header += f'{x+1} '
 		print(header)
 
 		for y in range(self.size):
-			row_name = y+1 if self.last_move//self.size != y else ' ►'
+			row_name = y+1 if self.last_move is None or self.last_move//self.size != y else ' ►'
 			row = f'{row_name:2} ' 
 			for x in range(self.size):
 				cell = self.board[self.size*y+x]

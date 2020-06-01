@@ -2,6 +2,8 @@ from gomoku import Gomoku, GomokuSearchTree
 import numpy as np
 import math
 
+
+
 class AlphaGomokuSearchTree(GomokuSearchTree):
     def __init__(self, parent, board, from_move, next_player, gomoku_net, simulation_limit=2, exploration_constant=1):
         GomokuSearchTree.__init__(self, parent, board, from_move, next_player, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
@@ -58,6 +60,6 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
 
 
     def predict(self, board, player):
-        model_input = np.expand_dims(self.encode_input(board, player), axis=0)
+        model_input = np.expand_dims(encode_input(board, player), axis=0)
         policy, reward = self.gomoku_net.model.predict(model_input)
         return policy[0], reward[0]

@@ -14,7 +14,7 @@ class GomokuGame {
 
     var onBoardUpdate = {}
     var board = GomokuBoard(IntArray(SIZE*SIZE){0}, -1, (0 until SIZE*SIZE).toHashSet())
-    var gomokuSearcher = MonteCarloSearch(2000, 1f)
+    var gomokuSearcher = MonteCarloSearch(3000, 2f)
     var gomokuSearchTree = GomokuSearchNode(null, board.clone(), WHITE)
 
 
@@ -100,7 +100,7 @@ class GomokuGame {
                     } else {
                         count = 0
                     }
-                    if (count == 5) {
+                    if (count == 4) {
                         return cell
                     }
                 }

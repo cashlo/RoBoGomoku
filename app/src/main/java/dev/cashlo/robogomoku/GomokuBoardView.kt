@@ -47,7 +47,7 @@ class GomokuBoardView : View {
         val whitePiecePaint = Paint()
         with(whitePiecePaint){
             flags = Paint.ANTI_ALIAS_FLAG
-            color = WHITE
+            color = 0xFFFFC0CB.toInt()
             style = Paint.Style.FILL_AND_STROKE
             strokeWidth = lineWidth
         }
