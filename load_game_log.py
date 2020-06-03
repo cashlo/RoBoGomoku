@@ -4,22 +4,22 @@ from alpha_go_zero_model import AlphaGoZeroModel
 import tensorflow as tf
 import numpy as np
 import os
-
+import glob
 
 def encode_input(board, player):
-    my_stone, your_stone = np.zeros((Gomoku.SIZE, Gomoku.SIZE)), np.zeros((Gomoku.SIZE, Gomoku.SIZE))
-    
-    for index, cell in enumerate(board):
-        x = index%Gomoku.SIZE
-        y = index//Gomoku.SIZE
-        
-        if cell == player:
-            my_stone[y][x] = 1
-            
-        if cell == Gomoku.other(player):
-            your_stone[y][x] = 1
+	my_stone, your_stone = np.zeros((Gomoku.SIZE, Gomoku.SIZE)), np.zeros((Gomoku.SIZE, Gomoku.SIZE))
+	
+	for index, cell in enumerate(board):
+		x = index%Gomoku.SIZE
+		y = index//Gomoku.SIZE
+		
+		if cell == player:
+			my_stone[y][x] = 1
+			
+		if cell == Gomoku.other(player):
+			your_stone[y][x] = 1
 
-    return np.stack((my_stone, your_stone), axis=-1)
+	return np.stack((my_stone, your_stone), axis=-1)
 
 os.system("")
 
@@ -75,17 +75,21 @@ def grayscale_block(value, max_value):
 # print(f"{reward[0][0]:.2%}")
 
 
-training_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
-training_net.model = tf.keras.models.load_model('model_1590950896.759192')
+lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
+lastest_model = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+lastest_model.model = tf.keras.models.load_model(lastest_model_file)
 
-game_log = pickle.loads(open('game_log_1590949458.9383295.pickle', "rb").read())
+game_log = pickle.loads(open('game_log_5_7.pickle', "rb").read())
+print(len(game_log['x']))
 for index in reversed(range(len(game_log['x']))):
 	game_x = game_log['x'][index]
-	policy, reward = training_net.model.predict(np.expand_dims(game_x, axis=0))
+	game_y0 = game_log['y'][0]
+	game_y1 = game_log['y'][1]
+	policy, reward = lastest_model.model.predict(np.expand_dims(game_x, axis=0))
 	print_x(game_x)
-	print_probability_distribution(game_log['y'][0][index])
+	print_probability_distribution(game_y0[index])
 	print_probability_distribution(policy[0])
 
-	print(f"{game_log['y'][1][index]:.2%}")
+	print(f"{game_y1[index]:.2%}")
 	print(f"{reward[0][0]:.2%}")
 	input()

@@ -6,8 +6,8 @@ import code
 
 
 class GomokuSearchTree(Node):
-	def __init__(self, parent, board, from_move, next_player, simulation_limit=1, exploration_constant=1, reward_decay=1):
-		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant, reward_decay=reward_decay)
+	def __init__(self, parent, board, from_move, next_player, simulation_limit=1, exploration_constant=1):
+		Node.__init__(self, parent=parent, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
 		self.board = board
 		self.from_move = from_move
 		self.next_player = next_player
@@ -16,7 +16,7 @@ class GomokuSearchTree(Node):
 	def create_from_move(self, move):
 		new_board = self.board.clone_board()
 		new_board.place_move(move, self.next_player)
-		return GomokuSearchTree( self, new_board, move, Gomoku.other(self.next_player), exploration_constant=self.exploration_constant, reward_decay=self.reward_decay)
+		return GomokuSearchTree( self, new_board, move, Gomoku.other(self.next_player), exploration_constant=self.exploration_constant)
 
 	def rollout(self):
 		simulation_board = self.board.clone_board()
@@ -70,11 +70,11 @@ class GomokuBoard:
 		y = self.last_move//self.size
 		cell = self.board[self.last_move]
 
-		min_x = max(0, x-4)
-		min_y = max(0, y-4)
+		min_x = max(0, x-(Gomoku.LINE_LENGTH-1))
+		min_y = max(0, y-(Gomoku.LINE_LENGTH-1))
 
-		max_x = min(self.size-1, x+4)
-		max_y = min(self.size-1, y+4)
+		max_x = min(self.size-1, x+(Gomoku.LINE_LENGTH-1))
+		max_y = min(self.size-1, y+(Gomoku.LINE_LENGTH-1))
 
 		main_diagonal_start = self.last_move - (self.size+1)*min(y-min_y, x-min_x)
 		main_diagonal_end   = self.last_move + (self.size+1)*min(max_y-y, max_x-x)
@@ -157,7 +157,6 @@ class GomokuBoard:
 
 
 	def print(self):
-
 		header = '   '
 		for x in range(self.size):
 			if self.last_move is not None and x == self.last_move%self.size:

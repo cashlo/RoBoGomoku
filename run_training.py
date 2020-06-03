@@ -5,6 +5,7 @@ from time import time
 import pickle
 import tensorflow as tf
 import concurrent.futures
+import glob
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_reward = [0]*game_steps_count
@@ -70,7 +71,7 @@ def generate_data(game_log, net, number_of_games, simulation_limit=50):
 			game.board.place_move(move, player)
 			search_tree = search_tree.create_from_move(move)
 			player = Gomoku.other(player)
-		print(f"Game {i}:")
+		print(f"Game {i+1}:")
 		game.board.print()
 		result = game.board.check_board()
 		backfill_end_reward(game_log, game_steps_count, result, Gomoku.other(player))
@@ -102,8 +103,8 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 		result = game.board.check_board()
 		if result != Gomoku.DRAW:
 			winner = tree_dict[result][0]
-			print(f"Net {winner} won")
 			winner_count[winner] += 1
+			print(f"Game {i+1}: {winner_count[0]}:{winner_count[1]}")
 	print(f"Net 0 win rate: {winner_count[0]/number_of_games:.0%}")
 	print(f"Net 1 win rate: {winner_count[1]/number_of_games:.0%}")
 	return winner_count[1]/number_of_games
@@ -118,10 +119,12 @@ def self_play():
 		'x': [],
 		'y': [[],[]]
 	}
-	game_log = pickle.loads(open('game_log_4_5.pickle', "rb").read())
-	
-	best_net_so_far =  AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+	game_log = pickle.loads(open('game_log_5_7.pickle', "rb").read())
 
+	lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
+	
+	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 	while True:
 #		future_game_list = []
 #		with concurrent.futures.ThreadPoolExecutor() as executor:
@@ -157,19 +160,19 @@ def self_play():
 
 		start_time = time()
 		print("Generating new data...")
-		generate_data(game_log, best_net_so_far, 50, 20)
+		generate_data(game_log, best_net_so_far, 50, 100)
 		save_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
 
 		print("Training new net...")
 		start_time = time()
-		fresh_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE, number_of_filters=64, number_of_residual_block=10).init_model()
+		fresh_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE, number_of_filters=64, number_of_residual_block=20, value_head_hidden_layer_size=64).init_model()
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
 
 		print("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 30, 10)
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, 10)
 		if fresh_net_win_rate > 0.7:
 			print("New net won!")
 			best_net_so_far = fresh_net
