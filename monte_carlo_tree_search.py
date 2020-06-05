@@ -18,7 +18,7 @@ class Node:
 		simulation_count = 0
 		start_time = time()
 		#past_nodes = []
-		while time() < start_time+self.simulation_limit:
+		while simulation_count < self.simulation_limit:
 			next_node = self.pick_next_node(self.exploration_constant)
 			reward = next_node.rollout()
 			next_node.backup(reward)
@@ -26,10 +26,10 @@ class Node:
 			#past_nodes.append(next_node)
 		# self.print('')
 		# code.interact(local=locals())
-		print(f"Number of sumulation: {simulation_count}")
+		# print(f"Number of sumulation: {simulation_count}")
 		return self.best_UCB_child(0)
 
-	def expand_random_move(self):
+	def expand_last_move(self):
 		move = self.possible_move_list.pop()
 
 		new_child = self.create_from_move(move)
@@ -50,7 +50,7 @@ class Node:
 			random.shuffle(self.possible_move_list)
 
 		if self.possible_move_list:
-			return self.expand_random_move()
+			return self.expand_last_move()
 
 		#code.interact(local=locals())
 		return self.best_UCB_child(exploration_constant).pick_next_node(exploration_constant)

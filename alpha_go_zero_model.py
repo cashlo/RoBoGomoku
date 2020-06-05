@@ -72,10 +72,10 @@ class AlphaGoZeroModel:
         return self
     
     def train_from_game_log(self, game_log):
-        half_log_length = len(game_log['x'])//2
-        x = np.array(game_log['x'][half_log_length:])
-        y0 = np.array(game_log['y'][0][half_log_length:])
-        y1 = np.array(game_log['y'][1][half_log_length:])
+        half_point = len(game_log['x'])//2
+        x = np.array(game_log['x'][half_point:])
+        y0 = np.array(game_log['y'][0][half_point:])
+        y1 = np.array(game_log['y'][1][half_point:])
         self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
         x = tf.image.rot90(x, k=1)
         y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))

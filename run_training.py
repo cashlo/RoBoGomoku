@@ -64,7 +64,7 @@ def generate_data(game_log, net, number_of_games, simulation_limit=50):
 		player = Gomoku.BLACK
 		game_steps_count = 0
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
-			move = search_tree.search().from_move
+			move = search_tree.search(step=game_steps_count).from_move
 			game_log['x'].append(search_tree.encode_input(game.board.board, player))
 			game_log['y'][0].append(search_tree.get_probability_distribution())
 			game_steps_count += 1
@@ -122,42 +122,13 @@ def self_play():
 	game_log = pickle.loads(open('game_log_5_7.pickle', "rb").read())
 
 	lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
+
+	print(f"Lastest net: {lastest_model_file}")
 	
 	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
 	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 	while True:
-#		future_game_list = []
-#		with concurrent.futures.ThreadPoolExecutor() as executor:
-#		for j in range(12):
-#			tree_dict = {
-#				Gomoku.BLACK: ['training', AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, training_net, simulation_limit=50)],
-#				Gomoku.WHITE: ['original', AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, original_net, simulation_limit=50)]
-#			}
-#			if j%2:
-#				tree_dict = {
-#					Gomoku.BLACK: tree_dict[Gomoku.WHITE],
-#					Gomoku.WHITE: tree_dict[Gomoku.BLACK]
-#				}
-#				future_game_list.append(executor.submit(one_game, tree_dict))
-
-#			for game in future_game_list:
-#				new_game_log, winner = game.result()
 		
-#				new_game_log, winner = one_game(tree_dict)
-
-#				game_log['x'].extend(new_game_log['x'])
-#				game_log['y'][0].extend(new_game_log['y'][0])
-#				game_log['y'][1].extend(new_game_log['y'][1])
-
-				# if winner:
-				# 	game_count[winner] += 1
-				# 	winner_list.append(winner_list)
-
-				# if len(winner_list) > 100:
-				# 	old_winner = winner_list.pop(0)
-				# 	game_count[old_winner] -= 1
-
-
 		start_time = time()
 		print("Generating new data...")
 		generate_data(game_log, best_net_so_far, 50, 100)
@@ -179,6 +150,7 @@ def self_play():
 			saved_model_dir = f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{time()}'
 			fresh_net.model.save(saved_model_dir)
 		print(f"Time taken: {time()-start_time}")
+
 	return game_count
 
 self_play()
