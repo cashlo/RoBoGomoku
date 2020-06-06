@@ -217,8 +217,8 @@ class Gomoku:
 		self.board = GomokuBoard(Gomoku.SIZE)
 		self.exploration_constant=exploration_constant
 		# self.search_tree = GomokuSearchTree(None, self.board, None, Gomoku.BLACK, exploration_constant=self.exploration_constant)
-		self.search_tree_white = GomokuSearchTree(None, self.board, None, Gomoku.WHITE, exploration_constant=self.exploration_constant)
-		self.search_tree_black = GomokuSearchTree(None, self.board, None, Gomoku.BLACK, exploration_constant=self.exploration_constant)
+		self.search_tree_white = GomokuSearchTree(None, self.board, None, Gomoku.WHITE, simulation_limit=4000, exploration_constant=self.exploration_constant)
+		self.search_tree_black = GomokuSearchTree(None, self.board, None, Gomoku.BLACK, simulation_limit=4000, exploration_constant=self.exploration_constant)
 		
 	def reset(self):
 		self.board = GomokuBoard(Gomoku.SIZE)
@@ -286,7 +286,7 @@ class Gomoku:
 			if self.board.last_move in self.search_tree_black.expanded_children:
 				self.search_tree_black = self.search_tree_black.expanded_children[self.board.last_move]
 			else:
-				self.search_tree_black = GomokuSearchTree(None, self.board, None, player, exploration_constant=self.exploration_constant)
+				self.search_tree_black = GomokuSearchTree(None, self.board, None, player, simulation_limit=4000, exploration_constant=self.exploration_constant)
 			move = self.search_tree_black.search().from_move
 			self.search_tree_black = self.search_tree_black.expanded_children[move]
 			return move
@@ -294,7 +294,7 @@ class Gomoku:
 			if self.board.last_move in self.search_tree_white.expanded_children:
 				self.search_tree_white = self.search_tree_white.expanded_children[self.board.last_move]
 			else:
-				self.search_tree_white = GomokuSearchTree(None, self.board, None, player, exploration_constant=self.exploration_constant)
+				self.search_tree_white = GomokuSearchTree(None, self.board, None, player, simulation_limit=4000, exploration_constant=self.exploration_constant)
 			move = self.search_tree_white.search().from_move
 			self.search_tree_white = self.search_tree_white.expanded_children[move]
 			return move
@@ -320,8 +320,8 @@ class Gomoku:
 		print(f"Game {i}: {game.board.check_board()}")
 		return game.board.check_board()
 
-	def human_play(size=9):
-		game = Gomoku(size, exploration_constant=2)
+	def human_play():
+		game = Gomoku()
 		player = Gomoku.BLACK
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
 			
