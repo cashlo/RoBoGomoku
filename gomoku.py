@@ -210,7 +210,7 @@ class Gomoku:
 	IN_PROGRESS = 0
 	DRAW = 3
 	
-	SIZE = 7
+	SIZE = 15
 	LINE_LENGTH = 5
 	
 	def __init__(self, exploration_constant=1):

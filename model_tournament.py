@@ -28,7 +28,7 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			player = Gomoku.other(player)
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
-			# game.board.print()
+			game.board.print()
 		result = game.board.check_board()
 		if result != Gomoku.DRAW:
 			winner = tree_dict[result][0]
@@ -53,8 +53,8 @@ for i in range(len(model_list)):
 		
 		net2 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
 		net2.model = model_list[j]
-
-		result_list[i][j] = net_vs(net1, net2, 6, 5)
+		print(f"Net {i} vs Net {j}")
+		result_list[i][j] = net_vs(net1, net2, 6, 200)
 
 for r in result_list:
 	print('|'.join(r))

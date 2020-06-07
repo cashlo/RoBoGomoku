@@ -1,7 +1,7 @@
 import pickle
 from gomoku import Gomoku, GomokuBoard
-from alpha_go_zero_model import AlphaGoZeroModel
-import tensorflow as tf
+#from alpha_go_zero_model import AlphaGoZeroModel
+#import tensorflow as tf
 import numpy as np
 import os
 import glob
@@ -75,21 +75,25 @@ def grayscale_block(value, max_value):
 # print(f"{reward[0][0]:.2%}")
 
 
-lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
-lastest_model = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
-lastest_model.model = tf.keras.models.load_model(lastest_model_file)
+#lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
+#lastest_model = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+#lastest_model.model = tf.keras.models.load_model(lastest_model_file)
 
 game_log = pickle.loads(open('game_log_5_7.pickle', "rb").read())
-print(len(game_log['x']))
+# print(len(game_log['x'])*10//12)
+# for index in range(len(game_log['x'])*10//12,len(game_log['x'])):
 for index in reversed(range(len(game_log['x']))):
+	#input_index = int(input())
+	#if input_index:
+	#	index = input_index
 	game_x = game_log['x'][index]
 	game_y0 = game_log['y'][0]
 	game_y1 = game_log['y'][1]
-	policy, reward = lastest_model.model.predict(np.expand_dims(game_x, axis=0))
+#	policy, reward = lastest_model.model.predict(np.expand_dims(game_x, axis=0))
 	print_x(game_x)
 	print_probability_distribution(game_y0[index])
-	print_probability_distribution(policy[0])
+#	print_probability_distribution(policy[0])
 
 	print(f"{game_y1[index]:.2%}")
-	print(f"{reward[0][0]:.2%}")
 	input()
+#	print(f"{reward[0][0]:.2%}")

@@ -6,6 +6,7 @@ import pickle
 import tensorflow as tf
 import concurrent.futures
 import glob
+import os
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_reward = [0]*game_steps_count
@@ -23,39 +24,6 @@ def save_game_log(game_log):
     f.write(pickle.dumps(game_log))
     f.close()
         
-def one_game(tree_dict):
-	
-	game_log = {
-		'x': [],
-		'y': [[],[]]
-	}
-	winner = ''
-	
-	game = Gomoku()
-	
-	print(f"Black is {tree_dict[Gomoku.BLACK][0]}")
-	print(f"White is {tree_dict[Gomoku.WHITE][0]}")
-
-	player = Gomoku.BLACK
-	game_steps_count = 0
-	while game.board.check_board() == Gomoku.IN_PROGRESS:
-		move = tree_dict[player][1].search().from_move
-		game_log['x'].append(tree_dict[player][1].encode_input(game.board.board, player))
-		game_log['y'][0].append(tree_dict[player][1].get_probability_distribution())
-		game_steps_count += 1
-		game.board.place_move(move, player)
-		tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
-		player = Gomoku.other(player)
-		tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
-		game.board.print()
-
-	result = game.board.check_board()
-	if result != Gomoku.DRAW:
-		winner = tree_dict[result][0]
-	backfill_end_reward(game_log, game_steps_count, result, Gomoku.other(player))
-
-	return (game_log, winner)
-
 
 def generate_data(game_log, net, number_of_games, simulation_limit=50):
 	for i in range(number_of_games):
@@ -71,6 +39,7 @@ def generate_data(game_log, net, number_of_games, simulation_limit=50):
 			game.board.place_move(move, player)
 			search_tree = search_tree.create_from_move(move)
 			player = Gomoku.other(player)
+			game.board.print()
 		print(f"Game {i+1}:")
 		game.board.print()
 		result = game.board.check_board()
@@ -119,22 +88,18 @@ def self_play():
 		'x': [],
 		'y': [[],[]]
 	}
-	game_log = pickle.loads(open('game_log_5_7.pickle', "rb").read())
+	if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
 
-	lastest_model_file = max(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
-
-	print(f"Lastest net: {lastest_model_file}")
-	
 	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
-	best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
-	while True:
-		
-		start_time = time()
-		print("Generating new data...")
-		generate_data(game_log, best_net_so_far, 50, 100)
-		save_game_log(game_log)
-		print(f"Time taken: {time()-start_time}")
 
+	net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
+	if net_files:
+		lastest_model_file = max(net_files)
+		print(f"Lastest net: {lastest_model_file}")
+		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
+
+	while True:
 		print("Training new net...")
 		start_time = time()
 		fresh_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE, number_of_filters=64, number_of_residual_block=20, value_head_hidden_layer_size=64).init_model()
@@ -143,12 +108,18 @@ def self_play():
 
 		print("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, 10)
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, 50)
 		if fresh_net_win_rate > 0.7:
 			print("New net won!")
 			best_net_so_far = fresh_net
 			saved_model_dir = f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{time()}'
 			fresh_net.model.save(saved_model_dir)
+		print(f"Time taken: {time()-start_time}")
+		
+		start_time = time()
+		print("Generating new data...")
+		generate_data(game_log, best_net_so_far, 50, 250)
+		save_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
 
 	return game_count
