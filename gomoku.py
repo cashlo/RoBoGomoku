@@ -162,7 +162,7 @@ class GomokuBoard:
 			if self.last_move is not None and x == self.last_move%self.size:
 				header += '▼ '
 			else:
-				header += f'{x+1} '
+				header += f'{x+1:2}'
 		print(header)
 
 		for y in range(self.size):

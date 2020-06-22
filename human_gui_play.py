@@ -3,7 +3,30 @@ from gomoku import Gomoku, GomokuBoard
 from alpha_gomoku_search_tree import AlphaGomokuSearchTree
 from alpha_go_zero_model import AlphaGoZeroModel
 import tensorflow as tf
+from tensorflow.compat.v2.keras.utils import multi_gpu_model
 import glob
+import os
+
+os.system("")
+
+def print_probability_distribution(distribution):
+
+	max_value = max(distribution)
+
+
+	for y in range(Gomoku.SIZE):
+		row = ''
+		for x in range(Gomoku.SIZE):
+			row += grayscale_block(distribution[y*Gomoku.SIZE+x], max_value)
+		print(row)
+			
+
+def grayscale_block(value, max_value):
+	r = int(255*value/max_value)
+	g = 0
+	b = int(255*(1-value)/max_value)
+	b = 0
+	return "\033[38;2;{};{};{}m{} \033[38;2;255;255;255m".format(r, g, b, '██')
 
 
 class Gomokuwindow:
@@ -29,7 +52,7 @@ class Gomokuwindow:
 
 		self.canvas.bind('<Button-1>', self.click)
 
-		# self.ai_move()
+		self.ai_move()
 
 		
 
@@ -63,10 +86,12 @@ class Gomokuwindow:
 		margin = cell_size*0.05
 		self.canvas.create_oval(x*cell_size+margin, y*cell_size+margin, (x+1)*cell_size-margin, (y+1)*cell_size-margin, fill=color,outline=color)
 
+
 	def ai_move(self):
 		player = Gomoku.BLACK
 		#move = self.game.monte_carlo_move(player)
 		move = self.search_tree.search(step=30).from_move
+		print_probability_distribution(self.search_tree.get_probability_distribution())
 
 		self.game.board.place_move(move, player)
 		self.search_tree = self.search_tree.create_from_move(move)
@@ -82,6 +107,7 @@ class Gomokuwindow:
 		print(f"Picked: {picked_model_file}")
 		self.picked_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
 		self.picked_net.model = tf.keras.models.load_model(picked_model_file)
+		self.picked_net.model = multi_gpu_model(self.picked_net.model, gpus=2)
 		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=200)
 
 

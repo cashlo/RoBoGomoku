@@ -3,6 +3,7 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Flatten, Input, Reshape, Conv2D, add
 from tensorflow.keras.optimizers import Adam
 from tensorflow.keras.regularizers import l2
+from tensorflow.compat.v2.keras.utils import multi_gpu_model
 
 import numpy as np
 
@@ -67,6 +68,7 @@ class AlphaGoZeroModel:
         for _ in range(self.number_of_residual_block):
             x = self.residual_block(x)
         self.model = Model(inputs=input_tensor, outputs=[self.policy_head(x), self.value_head(x)])
+        # self.model = multi_gpu_model(self.model, gpus=2)
         self.model.compile(Adam(lr=2e-4), ['categorical_crossentropy', 'mean_squared_error'])
         
         return self
@@ -76,21 +78,17 @@ class AlphaGoZeroModel:
         x = np.array(game_log['x'][half_point:])
         y0 = np.array(game_log['y'][0][half_point:])
         y1 = np.array(game_log['y'][1][half_point:])
-        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
-        x = tf.image.rot90(x, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
-        y0 = tf.image.rot90(y0, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
-        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
-        x = tf.image.rot90(x, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
-        y0 = tf.image.rot90(y0, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
-        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
-        x = tf.image.rot90(x, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
-        y0 = tf.image.rot90(y0, k=1)
-        y0 = np.reshape(y0, (-1,self.input_board_size*self.input_board_size))
-        self.model.fit(x, [y0, y1], shuffle=True, batch_size=64)
+
+        for r in range(0,4):
+            xr  = tf.image.rot90(x, k=r)
+            y0r = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+            y0r = tf.image.rot90(y0r, k=r)
+            y0r = np.reshape(y0r, (-1,self.input_board_size*self.input_board_size))
+
+            # x = np.concatenate( (x, xr) )
+            # y0 = np.concatenate( (y0, y0r) )
+            # y1 = np.concatenate( (y1, y1) )
+            
+            self.model.fit(xr, [y0r, y1], shuffle=True, batch_size=64, epochs=2)
         
 

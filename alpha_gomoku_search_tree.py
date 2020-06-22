@@ -1,6 +1,8 @@
 from gomoku import Gomoku, GomokuSearchTree
 import numpy as np
 import math
+from time import time
+import random
 
 class AlphaGomokuSearchTree(GomokuSearchTree):
     def __init__(self, parent, board, from_move, next_player, gomoku_net, simulation_limit=2, exploration_constant=1):
@@ -11,10 +13,12 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         self.gomoku_net = gomoku_net
         self.policy = [1/(Gomoku.SIZE*Gomoku.SIZE)]*(Gomoku.SIZE*Gomoku.SIZE)
         self.reward = 0
+        self.rollout()
 
     def search(self, step=5):
         simulation_count = 0
         #past_nodes = []
+        #start_time = time()
         while simulation_count < self.simulation_limit:
             next_node = self.pick_next_node(self.exploration_constant)
             reward = next_node.rollout()
@@ -24,8 +28,8 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         # self.print('')
         # code.interact(local=locals())
         # print(f"Number of sumulation: {simulation_count}")
-        
-        return self.most_visited_child(random=step < 5)
+        #print(f"thinking time: {time()-start_time}")
+        return self.most_visited_child(random=step <= 6)
 
     def most_visited_child(self, random=False):
         if not random:
@@ -35,10 +39,6 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         probability_list = np.array([c.visit_count for c in child_list])
         probability_list = probability_list / probability_list.sum()
         return np.random.choice(child_list, p=probability_list)
-
-
-
-
     
     def get_probability_distribution(self):
         distribution = np.zeros(Gomoku.SIZE*Gomoku.SIZE)
@@ -65,6 +65,7 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
 
         if self.possible_move_list is None:
             self.possible_move_list = self.get_all_possible_moves()
+            random.shuffle(self.possible_move_list)
             self.possible_move_list.sort(key=move_ucb)
         
         if not self.expanded_children:
