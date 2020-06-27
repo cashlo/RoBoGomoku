@@ -78,7 +78,6 @@ class Gomokuwindow:
 		self.game.board.place_move(y*Gomoku.SIZE+x, Gomoku.WHITE)
 		self.search_tree = self.search_tree.create_from_move(y*Gomoku.SIZE+x)
 		self.ai_move()
-		self.game.board.print()
 
 		
 
@@ -94,7 +93,9 @@ class Gomokuwindow:
 		player = Gomoku.BLACK
 		#move = self.game.monte_carlo_move(player)
 		move = self.search_tree.search(step=30).from_move
+		print("final distribution:")
 		print_probability_distribution(self.search_tree.get_probability_distribution())
+		print("predicted distribution:")
 		print_probability_distribution(self.search_tree.policy)
 
 		self.game.board.place_move(move, player)
@@ -151,7 +152,7 @@ class Gomokuwindow:
 			print(f"Picked: {picked_model_file}")
 			self.picked_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
 			self.picked_net.model = tf.keras.models.load_model(picked_model_file)
-		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=100)
+		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=500)
 
 
 window = Gomokuwindow()

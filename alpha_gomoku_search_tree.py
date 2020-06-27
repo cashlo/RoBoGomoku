@@ -3,6 +3,7 @@ import numpy as np
 import math
 from time import time
 import random
+import code
 
 
 
@@ -22,6 +23,7 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         #start_time = time()
         while simulation_count < self.simulation_limit:
             next_node = self.pick_next_node(self.exploration_constant)
+            # next_node.board.print()
             reward = next_node.rollout()
             next_node.backup(reward)
             simulation_count += 1
@@ -69,15 +71,17 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
 
         if self.possible_move_list is None:
             self.possible_move_list = self.get_all_possible_moves()
-            random.shuffle(self.possible_move_list)
+            # random.shuffle(self.possible_move_list)
+            # code.interact(local=locals())
             self.possible_move_list.sort(key=move_ucb)
         
         if not self.expanded_children:
-                return self.expand_last_move()
+            return self.expand_last_move()
 
         max_ucb_child = self.best_UCB_child(exploration_constant)
 
         if self.possible_move_list:
+            # code.interact(local=locals())
             max_ucb_move = self.possible_move_list[-1]
             if move_ucb(max_ucb_move) > self.ucb(max_ucb_child, exploration_constant):
                 return self.expand_last_move()

@@ -7,7 +7,7 @@ class Node:
 	def __init__(self, parent=None, simulation_limit=1, exploration_constant=1, reward_decay=1):
 		self.parent=parent
 		self.reward = 0
-		self.visit_count = 0
+		self.visit_count = 1
 		self.possible_move_list = None
 		self.expanded_children = {}
 		self.simulation_limit = simulation_limit

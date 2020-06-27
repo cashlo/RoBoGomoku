@@ -7,6 +7,9 @@ import tensorflow as tf
 import concurrent.futures
 import glob
 import os
+import argparse
+import sys
+from gomoku_window import GomokuWindow
 
 def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_reward = [0]*game_steps_count
@@ -19,13 +22,13 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_log['y'][1].extend(game_reward)
 	return game_log
 
-def save_game_log(game_log):
-    f = open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "wb")
+def save_game_log(game_log, file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+    f = open(file_name, "wb")
     f.write(pickle.dumps(game_log))
     f.close()
         
 
-def generate_data(game_log, net, number_of_games, simulation_limit=50):
+def generate_data(game_log, net, number_of_games, gui, simulation_limit=50):
 	for i in range(number_of_games):
 		game = Gomoku()
 		search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, net, simulation_limit=simulation_limit)
@@ -33,19 +36,23 @@ def generate_data(game_log, net, number_of_games, simulation_limit=50):
 		game_steps_count = 0
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
 			move = search_tree.search(step=game_steps_count).from_move
+
 			game_log['x'].append(search_tree.encode_input(game.board.board, player))
 			game_log['y'][0].append(search_tree.get_probability_distribution())
+			
 			game_steps_count += 1
 			game.board.place_move(move, player)
+			gui.draw_move(move%Gomoku.SIZE, move//Gomoku.SIZE, player)
 			search_tree = search_tree.create_from_move(move)
 			player = Gomoku.other(player)
-			game.board.print()
+			#game.board.print()
 		print(f"Game {i+1}:")
 		game.board.print()
 		result = game.board.check_board()
 		backfill_end_reward(game_log, game_steps_count, result, Gomoku.other(player))
+		gui.reset_board()
 
-def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
+def net_vs(net_0, net_1, number_of_games, game_log, gui, simulation_limit=50):
 	winner_count = [0, 0]
 	for i in range(number_of_games):
 		game = Gomoku()
@@ -62,14 +69,24 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 		#print(f"Black is net {tree_dict[Gomoku.BLACK][0]}")
 		#print(f"White is net {tree_dict[Gomoku.WHITE][0]}")
 		player = Gomoku.BLACK
+		game_steps_count = 0
 		while game.board.check_board() == Gomoku.IN_PROGRESS:
-			move = tree_dict[player][1].search().from_move
+			move = tree_dict[player][1].search(step=game_steps_count).from_move
+
+			game_log['x'].append(tree_dict[player][1].encode_input(game.board.board, player))
+			game_log['y'][0].append(tree_dict[player][1].get_probability_distribution())
+
+			game_steps_count += 1
 			game.board.place_move(move, player)
+			gui.draw_move(move%Gomoku.SIZE, move//Gomoku.SIZE, player)
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			player = Gomoku.other(player)
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			# game.board.print()
+		game.board.print()
 		result = game.board.check_board()
+		backfill_end_reward(game_log, game_steps_count, result, Gomoku.other(player))
+		gui.reset_board()
 		if result != Gomoku.DRAW:
 			winner = tree_dict[result][0]
 			winner_count[winner] += 1
@@ -78,12 +95,12 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 	print(f"Net 1 win rate: {winner_count[1]/number_of_games:.0%}")
 	return winner_count[1]/number_of_games
 
+parser = argparse.ArgumentParser()
+parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
+parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
 
-	
-
-
-
-def self_play():
+args = parser.parse_args()
+if args.gen_data:
 	game_log = {
 		'x': [],
 		'y': [[],[]]
@@ -99,29 +116,80 @@ def self_play():
 		print(f"Lastest net: {lastest_model_file}")
 		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
 
+		gui = GomokuWindow()
+
+		while True:
+			net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
+			if lastest_model_file != max(net_files):
+				lastest_model_file = max(net_files)
+				print(f"Lastest net: {lastest_model_file}")
+				best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
+
+			start_time = time()
+			print("Generating new data...")
+			generate_data(game_log, best_net_so_far, 20, gui, 500)
+			save_game_log(game_log)
+			print(f"Time taken: {time()-start_time}")			
+
+	else:
+		print("Model file not found")
+
+if args.train_new_net:
+	game_log = {
+		'x': [],
+		'y': [[],[]]
+	}
+	net_vs_game_log = {
+		'x': [],
+		'y': [[],[]]
+	}
+	if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+	else:
+		sys.exit("Game log not found")
+
+	if os.path.isfile(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+	
+
+	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
+
+	net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
+	if net_files:
+		lastest_model_file = max(net_files)
+		print(f"Lastest net: {lastest_model_file}")
+		best_net_so_far.model = tf.keras.models.load_model(lastest_model_file)
+
+	gui = GomokuWindow()
+
 	while True:
+		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+
 		print("Training new net...")
 		start_time = time()
-		fresh_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE, number_of_filters=64, number_of_residual_block=20, value_head_hidden_layer_size=64).init_model()
+		fresh_net = AlphaGoZeroModel(
+			input_board_size=Gomoku.SIZE,
+			number_of_filters=64,
+			number_of_residual_block=20,
+			value_head_hidden_layer_size=64
+		).init_model()
+
+		game_log['x'].extend( net_vs_game_log['x'] )
+		game_log['y'][0].extend( net_vs_game_log['y'][0] )
+		game_log['y'][1].extend( net_vs_game_log['y'][1] )
+
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
 
 		print("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 20, 50)
-		if fresh_net_win_rate > 0.7:
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 30, net_vs_game_log, gui, 500)
+		save_game_log(net_vs_game_log, f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle")
+		if fresh_net_win_rate >= 0.65:
 			print("New net won!")
 			best_net_so_far = fresh_net
 			saved_model_dir = f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{time()}'
 			fresh_net.model.save(saved_model_dir)
 		print(f"Time taken: {time()-start_time}")
-		
-		start_time = time()
-		print("Generating new data...")
-		generate_data(game_log, best_net_so_far, 50, 250)
-		save_game_log(game_log)
-		print(f"Time taken: {time()-start_time}")
 
-	return game_count
-
-self_play()
+parser.print_help()
