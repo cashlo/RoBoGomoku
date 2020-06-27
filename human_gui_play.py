@@ -6,6 +6,8 @@ import tensorflow as tf
 from tensorflow.compat.v2.keras.utils import multi_gpu_model
 import glob
 import os
+from time import time
+import pickle
 
 os.system("")
 
@@ -88,27 +90,68 @@ class Gomokuwindow:
 
 
 	def ai_move(self):
+		start_time = time()
 		player = Gomoku.BLACK
 		#move = self.game.monte_carlo_move(player)
 		move = self.search_tree.search(step=30).from_move
 		print_probability_distribution(self.search_tree.get_probability_distribution())
+		print_probability_distribution(self.search_tree.policy)
 
 		self.game.board.place_move(move, player)
 		self.search_tree = self.search_tree.create_from_move(move)
 		self.draw_move(move%Gomoku.SIZE, move//Gomoku.SIZE, 'black')
+		print(f"thinking time: {time()-start_time}")
+
+	def train_new_net(self):
+		game_log = {
+			'x': [],
+			'y': [[],[]]
+		}
+		net_vs_game_log = {
+			'x': [],
+			'y': [[],[]]
+		}
+		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+		else:
+			sys.exit("Game log not found")
+
+		if os.path.isfile(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+			net_vs_game_log = pickle.loads(open(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+
+		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+
+		print("Training new net...")
+		start_time = time()
+		self.picked_net = AlphaGoZeroModel(
+			input_board_size=Gomoku.SIZE,
+			number_of_filters=64,
+			number_of_residual_block=10,
+			value_head_hidden_layer_size=64
+		).init_model()
+
+		game_log['x'].extend( net_vs_game_log['x'] )
+		game_log['y'][0].extend( net_vs_game_log['y'][0] )
+		game_log['y'][1].extend( net_vs_game_log['y'][1] )
+
+		self.picked_net.train_from_game_log(game_log)
+		print(f"Time taken: {time()-start_time}")
 
 	def load_nn(self):
 		net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
 		print("Pick a net:")
+		print("-1: Train new net")
 		for i, file in enumerate(net_files):
 			print(f"{i}: {file}")
 		file_index = int(input())
-		picked_model_file = net_files[file_index]
-		print(f"Picked: {picked_model_file}")
-		self.picked_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
-		self.picked_net.model = tf.keras.models.load_model(picked_model_file)
-		self.picked_net.model = multi_gpu_model(self.picked_net.model, gpus=2)
-		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=200)
+		if file_index == -1:
+			self.train_new_net()
+		else:
+			picked_model_file = net_files[file_index]
+			print(f"Picked: {picked_model_file}")
+			self.picked_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
+			self.picked_net.model = tf.keras.models.load_model(picked_model_file)
+		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=100)
 
 
 window = Gomokuwindow()

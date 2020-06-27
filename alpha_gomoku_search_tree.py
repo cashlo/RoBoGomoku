@@ -4,6 +4,8 @@ import math
 from time import time
 import random
 
+
+
 class AlphaGomokuSearchTree(GomokuSearchTree):
     def __init__(self, parent, board, from_move, next_player, gomoku_net, simulation_limit=2, exploration_constant=1):
         GomokuSearchTree.__init__(self, parent, board, from_move, next_player, simulation_limit=simulation_limit, exploration_constant=exploration_constant)
@@ -11,9 +13,8 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         self.from_move = from_move
         self.next_player = next_player
         self.gomoku_net = gomoku_net
-        self.policy = [1/(Gomoku.SIZE*Gomoku.SIZE)]*(Gomoku.SIZE*Gomoku.SIZE)
+        self.policy = None #[1/(Gomoku.SIZE*Gomoku.SIZE)]*(Gomoku.SIZE*Gomoku.SIZE)
         self.reward = 0
-        self.rollout()
 
     def search(self, step=5):
         simulation_count = 0
@@ -29,7 +30,7 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         # code.interact(local=locals())
         # print(f"Number of sumulation: {simulation_count}")
         #print(f"thinking time: {time()-start_time}")
-        return self.most_visited_child(random=step <= 6)
+        return self.most_visited_child(random=step <= 3)
 
     def most_visited_child(self, random=False):
         if not random:
@@ -63,6 +64,9 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         if self.is_terminal():
             return self
 
+        if self.policy is None:
+            self.rollout()
+
         if self.possible_move_list is None:
             self.possible_move_list = self.get_all_possible_moves()
             random.shuffle(self.possible_move_list)
@@ -87,7 +91,7 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
             return np.random.choice(children_list)
         return max(self.expanded_children.values(), key= lambda c: self.ucb(c, exploration_constant))
     
-    def rollout(self):        
+    def rollout(self):
         last_player = Gomoku.other(self.next_player)
         result = self.board.check_board()
         if result == last_player:

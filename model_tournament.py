@@ -28,7 +28,7 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
 			player = Gomoku.other(player)
 			tree_dict[player][1] = tree_dict[player][1].create_from_move(move)
-			game.board.print()
+		game.board.print()
 		result = game.board.check_board()
 		if result != Gomoku.DRAW:
 			winner = tree_dict[result][0]
@@ -36,7 +36,7 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 			print(f"Game {i+1}: {winner_count[0]}:{winner_count[1]}")
 	print(f"Net 0 win rate: {winner_count[0]/number_of_games:.0%}")
 	print(f"Net 1 win rate: {winner_count[1]/number_of_games:.0%}")
-	return f"{winner_count[0]}:{winner_count[1]}"
+	return [winner_count[0],winner_count[1]]
 
 
 
@@ -44,20 +44,27 @@ def net_vs(net_0, net_1, number_of_games, simulation_limit=50):
 model_name_list = sorted(glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*'))
 model_list = [tf.keras.models.load_model(name) for name in model_name_list]
 
-result_list = [ ['   ']*len(model_list) for _ in model_list]
+result_list = [ [0,0]*len(model_list) for _ in model_list]
 
-for i in range(len(model_list)):
-	for j in range(i+1, len(model_list)):
-		net1 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
-		net1.model = model_list[i]
-		
-		net2 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
-		net2.model = model_list[j]
-		print(f"Net {i} vs Net {j}")
-		result_list[i][j] = net_vs(net1, net2, 6, 200)
+for _ in range(10):
+	for i in range(len(model_list)):
+		for j in range(i+1, len(model_list)):
+			net1 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
+			net1.model = model_list[i]
+			
+			net2 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
+			net2.model = model_list[j]
+			print(f"Net {i} vs Net {j}")
+			if result_list[i][j]:
+				result = net_vs(net1, net2, 2, 20)
+				result_list[i][j][0] += result[0]
+				result_list[i][j][1] += result[1]
+			else:
+				result_list[i][j] = net_vs(net1, net2, 2, 1)
 
-for r in result_list:
-	print('|'.join(r))
+	for r in result_list:
+		print(r)
+		print('|'.join([f"{s[0]}:{s[1]}" for s in r]))
 
 
 

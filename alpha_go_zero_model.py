@@ -79,16 +79,29 @@ class AlphaGoZeroModel:
         y0 = np.array(game_log['y'][0][half_point:])
         y1 = np.array(game_log['y'][1][half_point:])
 
-        for r in range(0,4):
-            xr  = tf.image.rot90(x, k=r)
-            y0r = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
-            y0r = tf.image.rot90(y0r, k=r)
-            y0r = np.reshape(y0r, (-1,self.input_board_size*self.input_board_size))
+        xr1  = tf.image.rot90(x, k=1)
+        y0r1 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0r1 = tf.image.rot90(y0r1, k=1)
+        y0r1 = np.reshape(y0r1, (-1,self.input_board_size*self.input_board_size))
 
-            # x = np.concatenate( (x, xr) )
-            # y0 = np.concatenate( (y0, y0r) )
-            # y1 = np.concatenate( (y1, y1) )
+        xf  = np.concatenate( (x, xr1) )
+        y0f = np.concatenate( (y0, y0r1) )
+        y1f = np.concatenate( (y1, y1) )
             
-            self.model.fit(xr, [y0r, y1], shuffle=True, batch_size=64, epochs=2)
-        
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=64, epochs=1)
 
+        xr2  = tf.image.rot90(x, k=2)
+        y0r2 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0r2 = tf.image.rot90(y0r2, k=2)
+        y0r2 = np.reshape(y0r2, (-1,self.input_board_size*self.input_board_size))
+
+        xr3  = tf.image.rot90(x, k=3)
+        y0r3 = np.reshape(y0, (-1,self.input_board_size, self.input_board_size, 1))
+        y0r3 = tf.image.rot90(y0r3, k=3)
+        y0r3 = np.reshape(y0r3, (-1,self.input_board_size*self.input_board_size))
+
+        xf  = np.concatenate( (xr2, xr3) )
+        y0f = np.concatenate( (y0r2, y0r3) )
+        y1f = np.concatenate( (y1, y1) )
+            
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=64, epochs=1)
