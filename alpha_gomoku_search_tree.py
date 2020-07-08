@@ -17,12 +17,14 @@ class AlphaGomokuSearchTree(GomokuSearchTree):
         self.policy = None #[1/(Gomoku.SIZE*Gomoku.SIZE)]*(Gomoku.SIZE*Gomoku.SIZE)
         self.reward = 0
 
-    def search(self, step=5):
+    def search(self, step=5, gui=None):
         simulation_count = 0
         #past_nodes = []
         #start_time = time()
         while simulation_count < self.simulation_limit:
             next_node = self.pick_next_node(self.exploration_constant)
+            if gui is not None:
+                gui.draw_board(next_node.board)
             # next_node.board.print()
             reward = next_node.rollout()
             next_node.backup(reward)

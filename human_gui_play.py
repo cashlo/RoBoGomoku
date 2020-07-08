@@ -43,9 +43,6 @@ class Gomokuwindow:
 		self.window = Tk()
 		self.window.title('GoMoKu')
 
-		self.status_label = Label(self.window, text="Testing")
-		self.status_label.pack()
-
 		self.load_nn()
 
 		self.canvas = Canvas(self.window, width=self.board_size, height=self.board_size, bg="#FFD167")
@@ -54,7 +51,7 @@ class Gomokuwindow:
 
 		self.canvas.bind('<Button-1>', self.click)
 
-		self.ai_move()
+		self.player1_move()
 
 		
 
@@ -77,7 +74,8 @@ class Gomokuwindow:
 		self.draw_move(x, y, 'white')
 		self.game.board.place_move(y*Gomoku.SIZE+x, Gomoku.WHITE)
 		self.search_tree = self.search_tree.create_from_move(y*Gomoku.SIZE+x)
-		self.ai_move()
+		if self.game.board.check_board() == Gomoku.IN_PROGRESS:
+			self.player1_move()
 
 		
 
@@ -88,7 +86,7 @@ class Gomokuwindow:
 		self.canvas.create_oval(x*cell_size+margin, y*cell_size+margin, (x+1)*cell_size-margin, (y+1)*cell_size-margin, fill=color,outline=color)
 
 
-	def ai_move(self):
+	def player1_move(self):
 		start_time = time()
 		player = Gomoku.BLACK
 		#move = self.game.monte_carlo_move(player)
@@ -101,7 +99,35 @@ class Gomokuwindow:
 		self.game.board.place_move(move, player)
 		self.search_tree = self.search_tree.create_from_move(move)
 		self.draw_move(move%Gomoku.SIZE, move//Gomoku.SIZE, 'black')
+		self.window.update()
 		print(f"thinking time: {time()-start_time}")
+		if self.search_tree_2 is not None:
+			self.search_tree_2 = self.search_tree_2.create_from_move(move)
+		if self.game.board.check_board() == Gomoku.IN_PROGRESS:
+			self.player2_move()
+
+	def player2_move(self):
+		if self.search_tree_2 is None:
+			return
+		start_time = time()
+		player = Gomoku.WHITE
+		#move = self.game.monte_carlo_move(player)
+		move = self.search_tree_2.search(step=30).from_move
+		print("final distribution:")
+		print_probability_distribution(self.search_tree_2.get_probability_distribution())
+		print("predicted distribution:")
+		print_probability_distribution(self.search_tree_2.policy)
+
+		self.game.board.place_move(move, player)
+		self.search_tree_2 = self.search_tree_2.create_from_move(move)
+		self.search_tree = self.search_tree.create_from_move(move)
+		self.draw_move(move%Gomoku.SIZE, move//Gomoku.SIZE, 'white')
+		self.window.update()
+		print(f"thinking time: {time()-start_time}")
+		if self.game.board.check_board() == Gomoku.IN_PROGRESS:
+			self.player1_move()
+
+
 
 	def train_new_net(self):
 		game_log = {
@@ -140,7 +166,7 @@ class Gomokuwindow:
 
 	def load_nn(self):
 		net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
-		print("Pick a net:")
+		print("Pick player 1:")
 		print("-1: Train new net")
 		for i, file in enumerate(net_files):
 			print(f"{i}: {file}")
@@ -153,6 +179,22 @@ class Gomokuwindow:
 			self.picked_net = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
 			self.picked_net.model = tf.keras.models.load_model(picked_model_file)
 		self.search_tree = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net, simulation_limit=500)
+
+		print("Pick player 2:")
+		print("-1: human")
+		
+		for i, file in enumerate(net_files):
+			print(f"{i}: {file}")
+		file_index = int(input())
+		self.search_tree_2 = None
+		if file_index != -1:
+			picked_model_file = net_files[file_index]
+			print(f"Picked: {picked_model_file}")
+			self.picked_net_2 = AlphaGoZeroModel(input_board_size=Gomoku.SIZE)
+			self.picked_net_2.model = tf.keras.models.load_model(picked_model_file)
+			self.search_tree_2 = AlphaGomokuSearchTree(None, GomokuBoard(Gomoku.SIZE), None, Gomoku.BLACK, self.picked_net_2, simulation_limit=500)
+
+
 
 
 window = Gomokuwindow()

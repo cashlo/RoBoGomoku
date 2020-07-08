@@ -39,9 +39,9 @@ converted_game_log = {
 	'y': [[],[]]
 }
 
-for index in range(len(game_log['x'])*10//12,len(game_log['x'])):
-	print(game_log['x'][index])
-	print(game_log['y'][0][index])
+for index in range(len(game_log['x'])):
+	# print(game_log['x'][index])
+	# print(game_log['y'][0][index])
 
 	top_pad = random.randint(0, 8)
 	left_pad = random.randint(0, 8)
@@ -52,12 +52,18 @@ for index in range(len(game_log['x'])*10//12,len(game_log['x'])):
 	padded_y0 = np.pad(padded_y0, [(top_pad,8-top_pad),(left_pad,8-left_pad)])
 	padded_y0= np.reshape(padded_y0, (-1,))
 	
-	print_x(padded_x)
-	print_probability_distribution(padded_y0)
+	# print_x(padded_x)
+	# print_probability_distribution(padded_y0)
 
 	converted_game_log['x'].append(padded_x)
 	converted_game_log['y'][0].append(padded_y0)
 	converted_game_log['y'][1].append(game_log['y'][1][index])
+
+old_game_log = pickle.loads(open('game_log_5_15_old.pickle', "rb").read())
+
+converted_game_log['x'].extend(old_game_log['x'])
+converted_game_log['y'][0].extend(old_game_log['y'][0])
+converted_game_log['y'][1].extend(old_game_log['y'][1])
 
 f = open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "wb")
 f.write(pickle.dumps(converted_game_log))

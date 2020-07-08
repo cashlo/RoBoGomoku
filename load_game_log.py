@@ -79,10 +79,10 @@ def grayscale_block(value, max_value):
 #lastest_model = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
 #lastest_model.model = tf.keras.models.load_model(lastest_model_file)
 
-game_log = pickle.loads(open('net_vs_game_log_5_15.pickle', "rb").read())
+game_log = pickle.loads(open('game_log_5_15.pickle', "rb").read())
 # print(len(game_log['x'])*10//12)
-# for index in range(len(game_log['x'])*10//12,len(game_log['x'])):
-for index in reversed(range(len(game_log['x']))):
+for index in range(len(game_log['x'])//2,len(game_log['x'])):
+#for index in reversed(range(len(game_log['x']))):
 	#input_index = int(input())
 	#if input_index:
 	#	index = input_index
