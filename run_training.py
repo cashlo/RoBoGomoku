@@ -22,7 +22,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_log['y'][1].extend(game_reward)
 	return game_log
 
-def save_game_log(game_log, file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
+def save_game_log(game_log, file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle"):
     f = open(file_name, "wb")
     f.write(pickle.dumps(game_log))
     f.close()
@@ -138,7 +138,7 @@ if args.gen_data:
 
 			start_time = time()
 			gui.set_status("Generating new data...")
-			generate_data(game_log, best_net_so_far, 20, gui, mind_window, 500)
+			generate_data(game_log, best_net_so_far, 10, gui, mind_window, 500)
 			save_game_log(game_log)
 			gui.set_status(f"Time taken: {time()-start_time}")			
 
@@ -187,12 +187,20 @@ if args.train_new_net:
 			value_head_hidden_layer_size=64
 		).init_model()
 
-		game_log['x'].extend( net_vs_game_log['x'] )
-		game_log['y'][0].extend( net_vs_game_log['y'][0] )
-		game_log['y'][1].extend( net_vs_game_log['y'][1] )
+		# game_log['x'].extend( net_vs_game_log['x'] )
+		# game_log['y'][0].extend( net_vs_game_log['y'][0] )
+		# game_log['y'][1].extend( net_vs_game_log['y'][1] )
 
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
+
+		print("Evaluate old net:")
+		#best_net_so_far.model.summary()
+		print(best_net_so_far.evaluate_from_game_log(game_log))
+		print("Evaluate new net:")
+		#fresh_net.model.summary()
+		print(fresh_net.evaluate_from_game_log(game_log))
+
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()
