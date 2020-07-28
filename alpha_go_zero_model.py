@@ -79,8 +79,8 @@ class AlphaGoZeroModel:
             x = self.residual_block(x)
         self.model = Model(inputs=input_tensor, outputs=[self.policy_head(x), self.value_head(x)])
         # self.model = multi_gpu_model(self.model, gpus=2)
-        self.model.compile(SGD(learning_rate=0.001, momentum=0.9), ['categorical_crossentropy', 'mean_squared_error'])
-        # self.model.compile(Adam(lr=1e-4), ['categorical_crossentropy', 'mean_squared_error'])
+#        self.model.compile(SGD(learning_rate=0.0005, momentum=0.9), ['categorical_crossentropy', 'mean_squared_error'])
+        self.model.compile(Adam(lr=1e-4), ['categorical_crossentropy', 'mean_squared_error'])
 
         
         return self
@@ -105,9 +105,9 @@ class AlphaGoZeroModel:
         y0f = np.concatenate( (y0, y0r1) )
         y1f = np.concatenate( (y1, y1r1) )
         def step_decay(epoch):
-            return 0.001*(0.7**epoch)
+            return 1e-4*(0.7**epoch)
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=128, epochs=10, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
 
         xr2, y0r2, y1r2 = rotate_data((x, y0, y1), self.input_board_size, 2)
         xr3, y0r3, y1r3 = rotate_data((x, y0, y1), self.input_board_size, 3)
@@ -116,4 +116,7 @@ class AlphaGoZeroModel:
         y0f = np.concatenate( (y0r2, y0r3) )
         y1f = np.concatenate( (y1r2, y1r3) )
             
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=128, epochs=10, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        def step_decay_2(epoch):
+            return 1e-4*(0.7**epoch)
+        callback_2 = tf.keras.callbacks.LearningRateScheduler(step_decay_2)
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback_2]) #, validation_split=0.1) #, callbacks=[callback])

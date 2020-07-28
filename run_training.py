@@ -22,11 +22,13 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 	game_log['y'][1].extend(game_reward)
 	return game_log
 
-def save_game_log(game_log, file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle"):
-    f = open(file_name, "wb")
-    f.write(pickle.dumps(game_log))
-    f.close()
-        
+def save_game_log(game_log, sim_limit, file_name=None):
+	if not file_name:
+		file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle"
+	f = open(file_name, "wb")
+	f.write(pickle.dumps(game_log))
+	f.close()
+		
 
 def generate_data(game_log, net, number_of_games, gui, mind_window, simulation_limit=50):
 	for i in range(number_of_games):
@@ -129,6 +131,8 @@ if args.gen_data:
 		gui = GomokuWindow("Current AI self-play to generate new data for training")
 		mind_window = GomokuWindow("Considering move", show_title=False, line_width=4)
 
+		sim_limit = 1500
+
 		while True:
 			net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
 			if lastest_model_file != max(net_files):
@@ -138,8 +142,8 @@ if args.gen_data:
 
 			start_time = time()
 			gui.set_status("Generating new data...")
-			generate_data(game_log, best_net_so_far, 10, gui, mind_window, 500)
-			save_game_log(game_log)
+			generate_data(game_log, best_net_so_far, 10, gui, mind_window, sim_limit)
+			save_game_log(game_log, sim_limit)
 			gui.set_status(f"Time taken: {time()-start_time}")			
 
 	else:
@@ -154,11 +158,7 @@ if args.train_new_net:
 		'x': [],
 		'y': [[],[]]
 	}
-	if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
-		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
-	else:
-		sys.exit("Game log not found")
-
+	
 	if os.path.isfile(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
 		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
 	
@@ -176,7 +176,10 @@ if args.train_new_net:
 	mind_window_2 = GomokuWindow("New AI", show_title=False, line_width=4)
 
 	while True:
-		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle"):
+			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle", "rb").read())
+		else:
+			sys.exit("Game log not found")
 
 		gui.set_status("Training new AI...")
 		start_time = time()
@@ -201,11 +204,12 @@ if args.train_new_net:
 		#fresh_net.model.summary()
 		print(fresh_net.evaluate_from_game_log(game_log))
 
+		sim_limit = 500
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()
-		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 30, net_vs_game_log, gui, mind_window_1, mind_window_2, 500)
-		save_game_log(net_vs_game_log, f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle")
+		fresh_net_win_rate = net_vs(best_net_so_far, fresh_net, 30, net_vs_game_log, gui, mind_window_1, mind_window_2, sim_limit)
+		save_game_log(net_vs_game_log, sim_limit, f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle")
 		if fresh_net_win_rate >= 0.65:
 			gui.set_status("New net won!")
 			best_net_so_far = fresh_net
