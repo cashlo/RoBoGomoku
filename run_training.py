@@ -176,8 +176,8 @@ if args.train_new_net:
 	mind_window_2 = GomokuWindow("New AI", show_title=False, line_width=4)
 
 	while True:
-		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle"):
-			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle", "rb").read())
+		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500.pickle"):
+			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500.pickle", "rb").read())
 		else:
 			sys.exit("Game log not found")
 

@@ -101,22 +101,14 @@ class AlphaGoZeroModel:
         y1 = np.array(game_log['y'][1][half_point:])
 
         xr1, y0r1, y1r1 = rotate_data((x, y0, y1), self.input_board_size, 1)
-        xf  = np.concatenate( (x, xr1) )
-        y0f = np.concatenate( (y0, y0r1) )
-        y1f = np.concatenate( (y1, y1r1) )
-        def step_decay(epoch):
-            return 1e-4*(0.7**epoch)
-        callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
-
         xr2, y0r2, y1r2 = rotate_data((x, y0, y1), self.input_board_size, 2)
         xr3, y0r3, y1r3 = rotate_data((x, y0, y1), self.input_board_size, 3)
 
-        xf  = np.concatenate( (xr2, xr3) )
-        y0f = np.concatenate( (y0r2, y0r3) )
-        y1f = np.concatenate( (y1r2, y1r3) )
-            
-        def step_decay_2(epoch):
-            return 1e-4*(0.7**epoch)
-        callback_2 = tf.keras.callbacks.LearningRateScheduler(step_decay_2)
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback_2]) #, validation_split=0.1) #, callbacks=[callback])
+        xf  = np.concatenate( (x, xr1, xr2, xr3) )
+        y0f = np.concatenate( (y0, y0r1, y0r2, y0r3) )
+        y1f = np.concatenate( (y1, y1r1, y1r2, y1r3) )
+
+        def step_decay(epoch):
+            return 1e-4*(0.4**(epoch+1))
+        callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=6, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
