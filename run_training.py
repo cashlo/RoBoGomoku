@@ -24,7 +24,7 @@ def backfill_end_reward(game_log, game_steps_count, result, last_player):
 
 def save_game_log(game_log, sim_limit, file_name=None):
 	if not file_name:
-		file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle"
+		file_name=f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}_1.pickle"
 	f = open(file_name, "wb")
 	f.write(pickle.dumps(game_log))
 	f.close()
@@ -110,15 +110,18 @@ def net_vs(net_0, net_1, number_of_games, game_log, gui, mind_window_0, mind_win
 parser = argparse.ArgumentParser()
 parser.add_argument("--gen-data", help="Generate new data with latest net", action="store_true")
 parser.add_argument("--train-new-net", help="Train new NN", action="store_true")
+parser.add_argument("--game-log", help="game log file number", default=1)
 
 args = parser.parse_args()
 if args.gen_data:
+	sim_limit = 1500
+
 	game_log = {
 		'x': [],
 		'y': [[],[]]
 	}
-	if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
-		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+	if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}_{args.game_log}.pickle"):
+		game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}_{args.game_log}.pickle", "rb").read())
 
 	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
 
@@ -131,8 +134,6 @@ if args.gen_data:
 		gui = GomokuWindow("Current AI self-play to generate new data for training")
 		mind_window = GomokuWindow("Considering move", show_title=False, line_width=4)
 
-		sim_limit = 1500
-
 		while True:
 			net_files = glob.glob(f'model_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_*')
 			if lastest_model_file != max(net_files):
@@ -142,8 +143,8 @@ if args.gen_data:
 
 			start_time = time()
 			gui.set_status("Generating new data...")
-			generate_data(game_log, best_net_so_far, 10, gui, mind_window, sim_limit)
-			save_game_log(game_log, sim_limit)
+			generate_data(game_log, best_net_so_far, 5, gui, mind_window, sim_limit)
+			save_game_log(game_log, sim_limit, f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}_{args.game_log}.pickle")
 			gui.set_status(f"Time taken: {time()-start_time}")			
 
 	else:
@@ -158,9 +159,11 @@ if args.train_new_net:
 		'x': [],
 		'y': [[],[]]
 	}
+
+	sim_limit = 500
 	
-	if os.path.isfile(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle"):
-		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}.pickle", "rb").read())
+	if os.path.isfile(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle"):
+		net_vs_game_log = pickle.loads(open(f"net_vs_game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_{sim_limit}.pickle", "rb").read())
 	
 
 	best_net_so_far = AlphaGoZeroModel(input_board_size=Gomoku.SIZE).init_model()
@@ -176,10 +179,16 @@ if args.train_new_net:
 	mind_window_2 = GomokuWindow("New AI", show_title=False, line_width=4)
 
 	while True:
-		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500.pickle"):
-			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500.pickle", "rb").read())
+		if os.path.isfile(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle"):
+			game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_n.pickle", "rb").read())
 		else:
 			sys.exit("Game log not found")
+
+		new_game_log = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500.pickle", "rb").read())
+		new_game_log_2 = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_1500_2.pickle", "rb").read())
+		new_game_log_3 = pickle.loads(open(f"game_log_{Gomoku.LINE_LENGTH}_{Gomoku.SIZE}_750.pickle", "rb").read())
+
+
 
 		gui.set_status("Training new AI...")
 		start_time = time()
@@ -190,21 +199,27 @@ if args.train_new_net:
 			value_head_hidden_layer_size=64
 		).init_model()
 
-		# game_log['x'].extend( net_vs_game_log['x'] )
-		# game_log['y'][0].extend( net_vs_game_log['y'][0] )
-		# game_log['y'][1].extend( net_vs_game_log['y'][1] )
+		game_log['x'].extend( new_game_log['x'] )
+		game_log['y'][0].extend( new_game_log['y'][0] )
+		game_log['y'][1].extend( new_game_log['y'][1] )
+
+		game_log['x'].extend( new_game_log_2['x'] )
+		game_log['y'][0].extend( new_game_log_2['y'][0] )
+		game_log['y'][1].extend( new_game_log_2['y'][1] )
+		
+		# game_log['x'].extend( new_game_log_3['x'] )
+		# game_log['y'][0].extend( new_game_log_3['y'][0] )
+		# game_log['y'][1].extend( new_game_log_3['y'][1] )
 
 		fresh_net.train_from_game_log(game_log)
 		print(f"Time taken: {time()-start_time}")
 
 		print("Evaluate old net:")
 		#best_net_so_far.model.summary()
-		print(best_net_so_far.evaluate_from_game_log(game_log))
+		print(best_net_so_far.evaluate_from_game_log(new_game_log))
 		print("Evaluate new net:")
 		#fresh_net.model.summary()
-		print(fresh_net.evaluate_from_game_log(game_log))
-
-		sim_limit = 500
+		print(fresh_net.evaluate_from_game_log(new_game_log))
 
 		gui.set_status("Checking new net performance...")
 		start_time = time()

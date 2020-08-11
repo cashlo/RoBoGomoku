@@ -80,16 +80,16 @@ class AlphaGoZeroModel:
         self.model = Model(inputs=input_tensor, outputs=[self.policy_head(x), self.value_head(x)])
         # self.model = multi_gpu_model(self.model, gpus=2)
 #        self.model.compile(SGD(learning_rate=0.0005, momentum=0.9), ['categorical_crossentropy', 'mean_squared_error'])
-        self.model.compile(Adam(lr=1e-4), ['categorical_crossentropy', 'mean_squared_error'])
+        self.model.compile(Adam(lr=2e-4), ['categorical_crossentropy', 'mean_squared_error'])
 
         
         return self
 
     def evaluate_from_game_log(self, game_log):
-        half_point = len(game_log['x'])//2
-        x = np.array(game_log['x'][half_point:])
-        y0 = np.array(game_log['y'][0][half_point:])
-        y1 = np.array(game_log['y'][1][half_point:])
+        x = np.array(game_log['x'])
+        y0 = np.array(game_log['y'][0])
+        y1 = np.array(game_log['y'][1])
+
         return self.model.evaluate(x, [y0, y1], batch_size=256, return_dict=True) #, callbacks=[callback])
 
     
@@ -109,6 +109,6 @@ class AlphaGoZeroModel:
         y1f = np.concatenate( (y1, y1r1, y1r2, y1r3) )
 
         def step_decay(epoch):
-            return 1e-4*(0.4**(epoch+1))
+            return 2e-4*(0.4**(epoch+1))
         callback = tf.keras.callbacks.LearningRateScheduler(step_decay)
-        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=6, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
+        self.model.fit(xf, [y0f, y1f], shuffle=True, batch_size=32, epochs=3, callbacks=[callback]) #, validation_split=0.1) #, callbacks=[callback])
