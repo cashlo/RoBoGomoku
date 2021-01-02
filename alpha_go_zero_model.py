@@ -3,7 +3,6 @@ from tensorflow.keras.models import Model
 from tensorflow.keras.layers import Activation, BatchNormalization, Dense, Flatten, Input, Reshape, Conv2D, add
 from tensorflow.keras.optimizers import Adam, SGD
 from tensorflow.keras.regularizers import l2
-from tensorflow.compat.v2.keras.utils import multi_gpu_model
 
 import numpy as np
 
