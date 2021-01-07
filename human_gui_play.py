@@ -3,7 +3,6 @@ from gomoku import Gomoku, GomokuBoard
 from alpha_gomoku_search_tree import AlphaGomokuSearchTree
 from alpha_go_zero_model import AlphaGoZeroModel
 import tensorflow as tf
-from tensorflow.compat.v2.keras.utils import multi_gpu_model
 import glob
 import os
 from time import time
